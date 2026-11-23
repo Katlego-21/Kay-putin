@@ -1,0 +1,14 @@
+body{background:#05070f;color:#fff;font-family:Arial;margin:0;padding:10px}
+button{background:#0f1626;color:#8a93b2;border:1px solid #1e2a4a;padding:9px 14px;border-radius:8px;font-size:14px;margin:2px}
+button.on{background:#00b0ff;color:#fff;font-weight:bold}
+button.onPair{background:#00c853;color:#000;font-weight:bold}
+.wrap{position:relative;border:1px solid #00b0ff;border-radius:10px;padding:8px;background:#0a0e1a;margin-top:10px}
+#chart{height:480px;width:100%;min-width:280px}
+.box{border:1px solid #00b0ff;border-radius:10px;padding:14px;margin-top:14px;background:#0a0e1a}
+.box h3{color:#4fc3f7;margin:0 0 8px;font-size:15px}
+.signal{border:2px solid #00c853;border-radius:12px;padding:14px;margin-top:14px;text-align:center;background:#071a0f}
+.signal.sell{border-color:#ff5252;background:#1a0a0a}
+.big{font-size:28px;font-weight:bold}
+.row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #16233a;font-size:13px}
+.green{color:#00e676}.red{color:#ff5252}.muted{color:#888;font-size:12px}
+input{background:#0f1a26;color:#fff;border:1px solid #1e3a5f;padding:8px;border-radius:6px;width:70px}
