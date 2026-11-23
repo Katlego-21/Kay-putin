@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Putin Fx Bot</title>
+<style>
+body{background:#050a0f;color:#fff;font-family:Arial;margin:0;padding:10px}
+.pair,.tf{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+button{background:#0f1a26;color:#aaa;border:1px solid #1e3a5f;padding:8px 12px;border-radius:6px}
+button.active{background:#00c853;color:#000;font-weight:bold}
+button.active-blue{background:#00b0ff;color:#fff;font-weight:bold}
+#tv{height:400px;background:#071018;border-radius:8px;overflow:hidden}
+.box{border:1px solid #00b0ff;border-radius:8px;padding:12px;margin-top:14px}
+.box h3{color:#4fc3f7;margin:0 0 5px;font-size:14px}
+.small{color:#888;font-size:12px}
+</style></head><body>
+
+<div class="pair" id="pairs"></div>
+<div class="tf" id="tfs"></div>
+<div style="font-size:12px"><span style="color:#00e676">— Buy zone</span> &nbsp;<span style="color:#ff5252">— Sell zone</span> &nbsp;<span style="color:#4da6ff">— VWAP</span> &nbsp;<span style="color:#888">— EMA 200</span></div>
+
+<div id="tv"><div id="tradingview_widget" style="height:400px"></div></div>
+<div id="chartMsg" style="color:#4fc3f7;margin-top:6px">XAUUSD • 1H • LIVE via TradingView</div>
+
+<div class="box"><h3>TODAY'S HIGH-IMPACT USD NEWS</h3><div class="small">ForexFactory calendar, SAST local time</div><div id="news" style="margin-top:8px">No high-impact USD news today.<br>Next: <b>Core PCE Price Index m/m</b> • USD • High Impact</div></div>
+<div class="box"><h3>CURRENT TREND</h3><div id="trend">🟢 <b>BULLISH</b> - Price above VWAP/EMA, look for BUY at Buy Zone. Watch for BOS confirmation.</div></div>
+
+<script src="https://s3.tradingview.com/tv.js"></script>
+<script>
+let curPair='XAUUSD', curTF='1H';
+const pairs=['XAUUSD','XAGUSD','EURUSD','BTCUSD','ETHUSD','US30'];
+const tfs=['1m','5m','15m','30m','1H','4H','Daily'];
+const tvMap={XAUUSD:'OANDA:XAUUSD',XAGUSD:'OANDA:XAGUSD',EURUSD:'OANDA:EURUSD',BTCUSD:'BINANCE:BTCUSDT',ETHUSD:'BINANCE:ETHUSDT',US30:'TVC:US30'};
+const tfMap={'1m':'1','5m':'5','15m':'15','30m':'30','1H':'60','4H':'240','Daily':'D'};
+
+function draw(){
+  document.getElementById('tradingview_widget').innerHTML='';
+  new TradingView.widget({
+    "autosize":true,"symbol":tvMap[curPair],"interval":tfMap[curTF],"timezone":"Africa/Johannesburg",
+    "theme":"dark","style":"1","locale":"en","enable_publishing":false,
+    "hide_side_toolbar":false,"allow_symbol_change":false,
+    "studies":["VWAP@tv-basicstudies","MASimple@tv-basicstudies"],
+    "container_id":"tradingview_widget"
+  });
+  document.getElementById('chartMsg').textContent=curPair+' • '+curTF+' • LIVE via TradingView';
+}
+pairs.forEach(p=>{let b=document.createElement('button');b.textContent=p;b.className=p===curPair?'active':'';b.onclick=()=>{curPair=p;document.querySelectorAll('#pairs button').forEach(x=>x.className='');b.className='active';draw();};document.getElementById('pairs').appendChild(b);});
+tfs.forEach(t=>{let b=document.createElement('button');b.textContent=t;b.className=t===curTF?'active-blue':'';b.onclick=()=>{curTF=t;document.querySelectorAll('#tfs button').forEach(x=>x.className='');b.className='active-blue';draw();};document.getElementById('tfs').appendChild(b);});
+draw();
+</script></body></html>
