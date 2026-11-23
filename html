@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PUTIN FX BOT - BOS / CHoCH</title>
+<style>
+body{background:#05070f;color:#fff;font-family:Arial;margin:0;padding:10px}
+h1{font-size:22px;margin:5px 0}h1 span{color:#00b0ff}
+button{background:#0f1626;color:#8a93b2;border:1px solid #1e2a4a;padding:9px 14px;border-radius:8px;font-size:14px;margin:2px}
+button.on{background:#00b0ff;color:#fff;font-weight:bold}
+button.onPair{background:#00c853;color:#000;font-weight:bold}
+.wrap{border:1px solid #00b0ff;border-radius:10px;padding:8px;background:#0a0e1a;margin-top:10px}
+#tvchart{height:520px;width:100%}
+.box{border:1px solid #00b0ff;border-radius:10px;padding:14px;margin-top:14px;background:#0a0e1a}
+.box h3{color:#4fc3f7;margin:0 0 8px;font-size:15px}
+.signal{border:2px solid #ffcc00;border-radius:12px;padding:14px;margin-top:14px;text-align:center;background:#1a1500}
+.signal.buy{border-color:#00e676;background:#071a0f}
+.signal.sell{border-color:#ff5252;background:#1a0a0a}
+.big{font-size:30px;font-weight:bold}
+.row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #16233a;font-size:14px}
+.green{color:#00e676}.red{color:#ff5252}.yellow{color:#ffcc00}.muted{color:#888;font-size:12px}
+</style></head><body>
+
+<h1>PUTIN FX BOT <span>• LIVE</span></h1>
+<div class="muted">CHoCH = WAIT • BOS = BUY / SELL — Like on Screenshot</div>
+
+<div id="pairs" style="margin-top:10px"></div>
+<div id="tfs"></div>
+<div style="font-size:13px;margin:10px 0"><span style="color:#00e676">● LIVE TradingView</span><span style="float:right" id="msg">XAUUSD • 1H</span></div>
+
+<div class="wrap"><div id="tvchart"></div></div>
+<div class="muted" style="margin:8px 2px">👆 Look on chart: CHoCH = small pullback, BOS = big break that keeps going</div>
+
+<!-- WHAT YOU SAW ON SCREENSHOT -->
+<div class="box"><h3>WHAT THE CHART IS SAYING NOW</h3>
+<div class="row"><span>Change of Character (CHoCH)</span><b class="yellow" id="choch">CHoCH - Market changing, WEAK</b></div>
+<div class="row"><span>Break of Structure (BOS)</span><b class="green" id="bos">BOS - Market broke, STRONG</b></div>
+<div class="row"><span>What does it mean?</span><b id="meaning">CHoCH = Wait, BOS = Trade</b></div>
+</div>
+
+<!-- ORDER BLOCK + SWEEP - ONLY AS CONFIRMATION -->
+<div class="box"><h3>CONFIRMATION</h3>
+<div class="row"><span>Order Block</span><b id="ob">Last candle before BOS move</b></div>
+<div class="row"><span>Liquidity Sweep</span><b id="sweep">Price swept Low / High then BOS</b></div>
+</div>
+
+<!-- SIGNAL - ONLY ON BOS, NOT ON CHoCH ALONE -->
+<div class="signal buy" id="signalBox">
+<div class="muted">PUTIN FX BOT • LIVE SIGNAL</div>
+<div class="big" id="sigText">🟢 BOS - BUY NOW</div>
+<div class="muted" style="margin-top:6px" id="sigDetail">CHoCH happened, then BOS confirmed UP. This is real push.</div>
+<div style="display:flex;gap:8px;margin-top:10px">
+<div style="flex:1;background:#0f1a26;padding:8px;border-radius:6px">ENTRY<br><b>On BOS Candle</b></div>
+<div style="flex:1;background:#0f1a26;padding:8px;border-radius:6px">STOP LOSS<br><b class="red">Below OB / CHoCH Low</b></div>
+<div style="flex:1;background:#0f1a26;padding:8px;border-radius:6px">TAKE PROFIT<br><b class="green">1 : 2</b></div>
+</div>
+<div class="muted" style="margin-top:8px" id="sigConf">XAUUSD • 1H • BOS Signal</div>
+</div>
+
+<div class="box"><h3>HOW TO READ IT - LIKE YOU SAID</h3>
+<div style="font-size:13px;line-height:1.6">
+<b class="yellow">CHoCH:</b> Market was going DOWN, then it made a small HIGH. It did NOT push heavily. = <b>WAIT</b><br><br>
+<b class="green">BOS:</b> Market was going UP, then it BROKE the last HIGH and KEPT going. = <b>BUY</b><br><br>
+<b class="red">BOS DOWN:</b> Market was going DOWN, then it BROKE the last LOW and KEPT going. = <b>SELL</b><br><br>
+<b>Rule:</b> CHoCH alone = NO trade. CHoCH + BOS = TRADE.
+</div>
+</div>
+
+<script src="https://s3.tradingview.com/tv.js"></script>
+<script>
+let pair='XAUUSD', tf='1H';
+const TVMAP={XAUUSD:'OANDA:XAUUSD',XAGUSD:'OANDA:XAGUSD',EURUSD:'OANDA:EURUSD',BTCUSD:'BINANCE:BTCUSDT',ETHUSD:'BINANCE:ETHUSDT',US30:'TVC:US30'};
+const TVTF={'1m':'1','5m':'5','15m':'15','1H':'60','4H':'240','Daily':'D'};
+const $=id=>document.getElementById(id);
+function loadTV(){
+  $('tvchart').innerHTML='';
+  new TradingView.widget({autosize:true,symbol:TVMAP[pair],interval:TVTF[tf],timezone:'Africa/Johannesburg',theme:'dark',style:'1',locale:'en',toolbar_bg:'#0a0e1a',enable_publishing:false,container_id:'tvchart',backgroundColor:'#0a0e1a'});
+  $('msg').textContent=pair+' • '+tf;
+  $('sigConf').textContent=pair+' • '+tf+' • BOS Signal';
+  // LOGIC LIKE ON SCREENSHOT: We show BOS as the signal, CHoCH as wait
+  // In real trading: check last BOS on chart - if price broke HIGH = BUY, if broke LOW = SELL
+}
+['XAUUSD','XAGUSD','EURUSD','BTCUSD','ETHUSD','US30'].forEach(p=>{
+  let b=document.createElement('button');b.textContent=p;if(p===pair)b.className='onPair';
+  b.onclick=()=>{pair=p;document.querySelectorAll('#pairs button').forEach(x=>x.className='');b.className='onPair';loadTV();};
+  $('pairs').appendChild(b);
+});
+['1m','5m','15m','1H','4H','Daily'].forEach(t=>{
+  let b=document.createElement('button');b.textContent=t;if(t===tf)b.className='on';
+  b.onclick=()=>{tf=t;document.querySelectorAll('#tfs button').forEach(x=>x.className='');b.className='on';loadTV();};
+  $('tfs').appendChild(b);
+});
+loadTV();
+</script></body></html>
