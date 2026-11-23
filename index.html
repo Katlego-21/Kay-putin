@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SMC Gold Terminal</title>
+  <script src="https://telegram.org"></script>
+  <script src="https://jsdelivr.net"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #060d14;
+      color: #9ec0dc;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      padding: 10px;
+    }
+    .hud-box {
+      position: relative;
+      background: #09131d;
+      border: 1px solid #13293d;
+      padding: 14px 12px;
+      margin-bottom: 14px;
+    }
+    .hud-box::before, .hud-box::after,
+    .hud-inner::before, .hud-inner::after {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-color: #29b6f6;
+      border-style: solid;
+      pointer-events: none;
+    }
+    .hud-box::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+    .hud-box::after { top: -1px; right: -1px; border-width: 2px 2px 0 0; }
+    .hud-inner::before { bottom: -1px; left: -1px; border-width: 0 0 2px 2px; }
+    .hud-inner::after { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+    .pair-bar {
+      display: flex;
+      overflow-x: auto;
+      gap: 5px;
+      margin-bottom: 10px;
+      padding-bottom: 2px;
+    }
+    .pair-bar button {
+      flex: 0 0 auto;
+      background: #0d1c2b;
+      color: #7ea3c4;
+      border: 1px solid #1b3854;
+      padding: 5px 9px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .pair-bar button.active {
+      background: #00e699;
+      color: #060d14;
+      border-color: #00e699;
+    }
+    .tf-bar {
+      display: flex;
+      justify-content: space-between;
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+    .tf-bar button {
+      flex: 1;
+      background: #0d1c2b;
+      color: #8cb2d4;
+      border: 1px solid #1b3854;
+      padding: 7px 0;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .tf-bar button.active {
+      background: #18c5f0;
+      color: #060d14;
+      border-color: #18c5f0;
+      box-shadow: 0 0 10px rgba(24, 197, 240, 0.4);
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      font-size: 11px;
+      font-style: italic;
+      margin-bottom: 10px;
+      color: #8cb2d4;
+    }
+    .legend span { display: flex; align-items: center; gap: 6px; }
+    .dot-buy { width: 12px; height: 0; border-bottom: 2px dashed #00e699; }
+    .dot-sell { width: 12px; height: 0; border-bottom: 2px dashed #ff4757; }
+    .dot-vwap { width: 12px; height: 2px; background: #18c5f0; }
+    .dot-ema { width: 12px; height: 2px; background: #7d96b0; }
+    #status { font-size: 11px; color: #18c5f0; margin-bottom: 4px; font-family: monospace; }
+    #chart { width: 100%; height: 350px; }
+    .section-title {
+      color: #5bc0eb;
+      font-size: 14px;
+      letter-spacing: 2px;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+    .news-sub { font-size: 12px; color: #5c7c99; margin-bottom: 10px; }
+    #news-feed, #trend-feed { font-size: 13px; color: #d6e6f5; line-height: 1.5; }
+  </style>
+</head>
+<body>
+
+  <div class="hud-box">
+    <div class="hud-inner">
+      <div class="pair-bar" id="pairs">
+        <button class="active" onclick="changePair('XAU/USD', this)">XAUUSD</button>
+        <button onclick="changePair('XAG/USD', this)">XAGUSD</button>
+        <button onclick="changePair('EUR/USD', this)">EURUSD</button>
+        <button onclick="changePair('BTC/USD', this)">BTCUSD</button>
+        <button onclick="changePair('ETH/USD', this)">ETHUSD</button>
+        <button onclick="changePair('DIA', this)">US30</button>
+        <button onclick="changePair('EWG', this)">GER40</button>
+      </div>
+
+      <div class="tf-bar" id="timeframes">
+        <button onclick="loadChart('1min', this)">1m</button>
+        <button onclick="loadChart('5min', this)">5m</button>
+        <button onclick="loadChart('15min', this)">15m</button>
+        <button onclick="loadChart('30min', this)">30m</button>
+        <button class="active" onclick="loadChart('1h', this)">1H</button>
+        <button onclick="loadChart('4h', this)">4H</button>
+        <button onclick="loadChart('1day', this)">Daily</button>
+      </div>
+
+      <div class="legend">
+        <span><i class="dot-buy"></i> Buy zone</span>
+        <span><i class="dot-sell"></i> Sell zone</span>
+        <span><i class="dot-vwap"></i> VWAP</span>
+        <span><i class="dot-ema"></i> EMA 200</span>
+      </div>
+
+      <div id="status">Loading chart...</div>
+      <div id="chart"></div>
+    </div>
+  </div>
+
+  <div class="hud-box">
+    <div class="hud-inner">
+      <div class="section-title">TODAY'S HIGH-IMPACT USD NEWS</div>
+      <div class="news-sub">ForexFactory calendar, SAST local time</div>
+      <div id="news-feed">Loading news...</div>
+    </div>
+  </div>
+
+  <div class="hud-box">
+    <div class="hud-inner">
+      <div class="section-title">CURRENT TREND</div>
+      <div id="trend-feed">Analyzing SMC market structure...</div>
+    </div>
+  </div>
+
+  <script>
+    if (window.Telegram && window.Telegram.WebApp) {
+      window.Telegram.WebApp.expand();
+    }
+
+    const API_KEY = 'b5b34b4a620c456aabb3ff8b9c674fe8';
+    let currentSymbol = 'XAU/USD';
+    let currentInterval = '1h';
+    const statusEl = document.getElementById('status');
+
+    const chartEl = document.getElementById('chart');
+    const chart = LightweightCharts.createChart(chartEl, {
+      width: chartEl.clientWidth || 340,
+      height: 350,
+      layout: { background: { color: '#09131d' }, textColor: '#6f8fae' },
+      grid: { vertLines: { color: '#102132' }, horzLines: { color: '#102132' } },
+      crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+      rightPriceScale: { borderColor: '#152c42' },
+      timeScale: { borderColor: '#152c42', timeVisible: true, secondsVisible: false }
+    });
+
+    const candleSeries = chart.addCandlestickSeries({
+      upColor: '#00e699',
+      downColor: '#ff4757',
+      borderVisible: false,
+      wickUpColor: '#00e699',
+      wickDownColor: '#ff4757'
+    });
+
+    const volumeSeries = chart.addHistogramSeries({
+      priceFormat: { type: 'volume' },
+      priceScaleId: ''
+    });
+    volumeSeries.priceScale().applyOptions({
+      scaleMargins: { top: 0.82, bottom: 0 }
+    });
+
+    const vwapSeries = chart.addLineSeries({ color: '#18c5f0', lineWidth: 1, priceLineVisible: false });
+    const emaSeries = chart.addLineSeries({ color: '#7d96b0', lineWidth: 1, priceLineVisible: false });
+    let zoneLines = [];
+
+    function changePair(symbol, btn) {
+      currentSymbol = symbol;
+      document.querySelectorAll('.pair-bar button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      loadChart(currentInterval);
+    }
+
+    async function loadChart(interval, btn) {
+      currentInterval = interval;
+      if (btn) {
+        document.querySelectorAll('.tf-bar button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+
+      statusEl.innerText = `Loading ${currentSymbol} (${interval})...`;
+
+      try {
+        const url = `https://twelvedata.com{encodeURIComponent(currentSymbol)}&interval=${interval}&outputsize=250&apikey=${API_KEY}`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (!data.values) {
+          statusEl.innerText = 'API Notice: ' + (data.message || 'Wait 1 minute (free API rate limit)');
+          return;
+        }
+
+        const raw = data.values.slice().reverse();
+        const candles = raw.map(d => ({
+          time: Math.floor(new Date(d.datetime.replace(' ', 'T') + 'Z').getTime() / 1000),
+          open: parseFloat(d.open),
+          high: parseFloat(d.high),
+          low: parseFloat(d.low),
+          close: parseFloat(d.close),
+          vol: d.volume ? parseFloat(d.volume) : (Math.abs(parseFloat(d.close) - parseFloat(d.open)) + (parseFloat(d.high) - parseFloat(d.low))) * 100
+        }));
+
+        candleSeries.setData(candles);
+
+        volumeSeries.setData(candles.map(c => ({
+          time: c.time,
+          value: c.vol,
+          color: c.close >= c.open ? 'rgba(0, 230, 153, 0.35)' : 'rgba(255, 71, 87, 0.35)'
+        })));
+
+        const vwapData = [];
+        const emaData = [];
+        const k = 2 / (200 + 1);
+        let ema = candles[0].close;
+        let cumPV = 0;
+        let cumVol = 0;
+
+        for (let i = 0; i < candles.length; i++) {
+          const c = candles[i];
+          ema = c.close * k + ema * (1 - k);
+          if (i >= 30) emaData.push({ time: c.time, value: ema });
+
+          const typical = (c.high + c.low + c.close) / 3;
+          cumPV += typical * (c.vol || 1);
+          cumVol += (c.vol || 1);
+          vwapData.push({ time: c.time, value: cumPV / cumVol });
+        }
+        emaSeries.setData(emaData);
+        vwapSeries.setData(vwapData);
+
+        const markers = [];
+        for (let i = 4; i < candles.length - 4; i++) {
+          const c = candles[i];
+          const isSwingHigh = c.high > candles[i-1].high && c.high > candles[i-2].high && c.high > candles[i+1].high && c.high > candles[i+2].high;
+          const isSwingLow = c.low < candles[i-1].low && c.low < candles[i-2].low && c.low < candles[i+1].low && c.low < candles[i+2].low;
+
+          if (isSwingHigh) {
+            markers.push({ time: c.time, position: 'aboveBar', color: '#ff4757', shape: 'circle', text: 'CHoCH' });
+          } else if (isSwingLow) {
+            markers.push({ time: c.time, position: 'belowBar', color: '#00e699', shape: 'circle', text: 'BOS' });
+          }
+        }
+        candleSeries.setMarkers(markers);
+
+        zoneLines.forEach(line => candleSeries.removePriceLine(line));
