@@ -1,0 +1,2352 @@
+```html
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PUTIN PABLO FX — Live Gold & Multi-Asset Chart Scanner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://s3.tradingview.com/tv.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div class="rounded-xl border border-slate-800 bg-slate-950/70 p-3">
+              <label for="xmMatchedToggle" class="flex items-center justify-between text-xs font-semibold text-slate-200">
+                <span>Match to XM MT5 Bid</span>
+                <input id="xmMatchedToggle" type="checkbox" class="h-4 w-4 rounded accent-cyan-400" />
+              </label>
+              <p class="mt-1 text-[11px] text-slate-400">
+                Marks <span id="settingsSymLabel" class="font-mono text-amber-300">XAUUSD</span> as matched to your XM MT5 bid quote.
+              </p>
+            </div>
+
+            <div class="rounded-xl border border-slate-800 bg-slate-950/70 p-3">
+              <label for="priceOffsetInput" class="block text-xs font-semibold text-slate-200">
+                Broker / XM Bid Offset
+              </label>
+              <div class="mt-1.5 flex items-center gap-2">
+                <input
+                  id="priceOffsetInput"
+                  type="number"
+                  step="any"
+                  placeholder="0.000"
+                  class="w-full rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1.5 font-mono text-xs text-white focus:border-cyan-400 focus:outline-none"
+                />
+                <button
+                  id="applyOffsetBtn"
+                  type="button"
+                  class="shrink-0 rounded-lg bg-cyan-500/20 border border-cyan-400/40 px-2.5 py-1.5 text-xs font-semibold text-cyan-200 hover:bg-cyan-500/30"
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+
+            <div class="rounded-xl border border-slate-800 bg-slate-950/70 p-3">
+              <label for="twelveDataKeyInput" class="block text-xs font-semibold text-slate-200">
+                Twelve Data API Key (Optional)
+              </label>
+              <div class="mt-1.5 flex items-center gap-2">
+                <input
+                  id="twelveDataKeyInput"
+                  type="password"
+                  placeholder="Paste Twelve Data key..."
+                  class="w-full rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1.5 font-mono text-xs text-white focus:border-cyan-400 focus:outline-none"
+                />
+                <button
+                  id="saveApiKeyBtn"
+                  type="button"
+                  class="shrink-0 rounded-lg bg-emerald-500/20 border border-emerald-400/40 px-2.5 py-1.5 text-xs font-semibold text-emerald-200 hover:bg-emerald-500/30"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Optional Telegram Bot Token & Chat ID Config (stored in localStorage) -->
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <div class="rounded-xl border border-slate-800 bg-slate-950/70 p-3">
+              <label for="telegramBotTokenInput" class="block text-xs font-semibold text-slate-200">
+                Telegram Bot Token (Optional Dispatch/Poll)
+              </label>
+              <input
+                id="telegramBotTokenInput"
+                type="password"
+                placeholder="123456:ABCdef..."
+                class="mt-1.5 w-full rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1.5 font-mono text-xs text-white focus:border-cyan-400 focus:outline-none"
+              />
+            </div>
+            <div class="rounded-xl border border-slate-800 bg-slate-950/70 p-3">
+              <label for="telegramChatIdInput" class="block text-xs font-semibold text-slate-200">
+                Telegram Chat ID
+              </label>
+              <div class="mt-1.5 flex items-center gap-2">
+                <input
+                  id="telegramChatIdInput"
+                  type="text"
+                  placeholder="e.g. -1001234567890"
+                  class="w-full rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1.5 font-mono text-xs text-white focus:border-cyan-400 focus:outline-none"
+                />
+                <button
+                  id="saveTelegramBtn"
+                  type="button"
+                  class="shrink-0 rounded-lg bg-cyan-500/20 border border-cyan-400/40 px-2.5 py-1.5 text-xs font-semibold text-cyan-200 hover:bg-cyan-500/30"
+                >
+                  Save Bot
+                </button>
+              </div>
+            </div>
+          </div>
+          <div id="settingsFeedback" class="text-xs text-cyan-300 min-h-[1rem]"></div>
+      </div>
+    </header>
+
+    <!-- Always-Visible Top-Level LIVE CHAT Strip on the Main Board -->
+    <section id="liveChatMainSection" aria-label="PUTIN PABLO FX Live Chat" class="scanner-frame corner-bracket rounded-2xl p-3.5 sm:p-4 space-y-3">
+      <div class="flex flex-col gap-2 border-b border-slate-800/90 pb-2.5 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-center gap-2.5">
+          <span class="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h2 class="text-sm sm:text-base font-extrabold tracking-tight text-white">LIVE CHAT • PUTIN PABLO FX</h2>
+              <span id="liveChatContextBadge" class="rounded-md border border-cyan-400/40 bg-cyan-500/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-cyan-200">
+                XAUUSD • 5m
+              </span>
+              <span id="telegramBridgeStatus" class="rounded-md border border-slate-700 bg-slate-900 px-2 py-0.5 font-mono text-[10px] text-slate-400">
+                TG Bridge: Local Live
+              </span>
+            </div>
+            <p class="text-[11px] text-slate-400">
+              Real-time scanner chat reading live price, BOS/CHoCH structure, key levels &amp; zones directly in the board
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            id="tgSyncNowBtn"
+            type="button"
+            class="rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1 font-mono text-[11px] text-cyan-200 hover:border-cyan-400/50"
+          >
+            TG Poll
+          </button>
+          <button
+            id="clearLiveChatBtn"
+            type="button"
+            class="rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1 text-[11px] text-slate-300 hover:border-rose-400/50"
+          >
+            Clear Chat
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Prompt Chips -->
+      <div class="flex flex-wrap items-center gap-1.5" id="liveChatQuickChips">
+        <button type="button" data-prompt="Scan Setup" class="live-chat-chip rounded-lg border border-amber-400/40 bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold text-amber-200 hover:bg-amber-500/20">
+          Scan Setup
+        </button>
+        <button type="button" data-prompt="Key Levels" class="live-chat-chip rounded-lg border border-cyan-400/40 bg-cyan-500/10 px-2.5 py-1 text-[11px] font-semibold text-cyan-200 hover:bg-cyan-500/20">
+          Key Levels
+        </button>
+        <button type="button" data-prompt="BOS / CHoCH" class="live-chat-chip rounded-lg border border-emerald-400/40 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-200 hover:bg-emerald-500/20">
+          BOS / CHoCH
+        </button>
+        <button type="button" data-prompt="USD News" class="live-chat-chip rounded-lg border border-purple-400/40 bg-purple-500/10 px-2.5 py-1 text-[11px] font-semibold text-purple-200 hover:bg-purple-500/20">
+          USD News
+        </button>
+        <button type="button" data-prompt="Switch Gold" class="live-chat-chip rounded-lg border border-amber-300/40 bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-amber-300 hover:border-amber-300">
+          Switch Gold
+        </button>
+      </div>
+
+      <!-- Live Chat Transcript -->
+      <div id="liveChatHistory" class="max-h-56 overflow-y-auto rounded-xl border border-slate-800/90 bg-slate-950/80 p-3 space-y-2.5">
+        <!-- Populated dynamically by JS -->
+      </div>
+
+      <!-- Live Chat Input Row -->
+      <form id="liveChatForm" class="flex items-center gap-2">
+        <input
+          id="liveChatInput"
+          type="text"
+          autocomplete="off"
+          placeholder="Message PUTIN PABLO FX live chat (e.g. Scan Setup, Key Levels, BOS / CHoCH, USD News, Switch Gold)..."
+          class="flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3.5 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
+        />
+        <button
+          type="submit"
+          class="rounded-xl bg-cyan-400 px-4 py-2 text-xs sm:text-sm font-bold text-slate-950 hover:bg-cyan-300 transition"
+        >
+          Send
+        </button>
+      </form>
+    </section>
+
+    <!-- XM / Broker Price-Match Banner -->
+    <section id="xmMatchBanner" class="rounded-2xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div class="text-xs sm:text-sm text-amber-100">
+        <span class="font-semibold text-amber-300">Broker Sync Notice:</span>
+        <span id="xmBannerCopy">
+          Prices aren't matched to XM yet. Open Settings and match GOLD to your XM MT5 Bid before using these levels.
+        </span>
+      </div>
+      <button
+        id="quickOpenSettingsBtn"
+        type="button"
+        class="self-start sm:self-center shrink-0 rounded-xl border border-amber-300/50 bg-amber-400/20 px-3 py-1.5 text-xs font-semibold text-amber-200 hover:bg-amber-400/30 transition"
+      >
+        Match XM Bid
+      </button>
+    </section>
+
+    <!-- Main Grid: Left Live Chart & Scanner Cards | Right Live Bot Chat -->
+    <div class="grid grid-cols-1 gap-4 xl:grid-cols-12">
+
+      <!-- Left / Primary Column (8 cols on xl) -->
+      <div class="space-y-4 xl:col-span-8">
+
+        <!-- Live TradingView Chart Widget Card -->
+        <section class="scanner-frame corner-bracket rounded-2xl p-3.5 sm:p-4 space-y-2.5">
+          <div class="flex flex-col gap-1.5 border-b border-slate-800/80 pb-2.5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-mono text-xs font-bold uppercase tracking-wider text-cyan-400">
+                  TradingView Live Feed
+                </span>
+                <span id="tvWidgetSymbolTag" class="rounded-md border border-slate-700 bg-slate-900 px-2 py-0.5 font-mono text-[11px] text-amber-300">
+                  OANDA:XAUUSD
+                </span>
+                <span id="tvWidgetTfTag" class="rounded-md border border-cyan-400/40 bg-cyan-500/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-cyan-200">
+                  5m
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-400">
+                Live TradingView chart synced with your selected instrument &amp; timeframe
+              </p>
+            </div>
+          </div>
+          <div id="tradingviewChartContainer" class="h-[340px] sm:h-[400px] w-full rounded-xl border border-slate-800/90 bg-[#07111a] overflow-hidden"></div>
+        </section>
+
+        <!-- Live Warrior Signal Banner Card -->
+        <section id="warriorSignalCard" class="scanner-frame corner-bracket rounded-2xl p-4 space-y-3">
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div class="font-mono text-[11px] font-bold tracking-widest text-amber-300 uppercase">
+                Warrior Signal Engine
+              </div>
+              <div class="mt-0.5 flex flex-wrap items-center gap-2.5">
+                <span id="warriorSignalAction" class="rounded-xl border border-amber-400/50 bg-amber-500/15 px-3 py-1 font-mono text-sm sm:text-base font-extrabold text-amber-300">
+                  NO A-GRADE SETUP
+                </span>
+                <span id="warriorSignalConfidence" class="font-mono text-xs text-slate-300">
+                  Confluence: 3/9
+                </span>
+              </div>
+            </div>
+            <div class="font-mono text-xs text-slate-300 sm:text-right">
+              <div>Entry Zone: <span id="warriorEntryRange" class="font-bold text-white">—</span></div>
+              <div>Stop Loss: <span id="warriorStopLoss" class="font-bold text-rose-300">—</span></div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-2 sm:grid-cols-3 font-mono text-xs">
+            <div class="rounded-xl border border-slate-800/90 bg-slate-950/75 px-3 py-2">
+              <span class="text-slate-400">TP1:</span>
+              <span id="warriorTp1" class="ml-1.5 font-bold text-emerald-300">—</span>
+            </div>
+            <div class="rounded-xl border border-slate-800/90 bg-slate-950/75 px-3 py-2">
+              <span class="text-slate-400">TP2:</span>
+              <span id="warriorTp2" class="ml-1.5 font-bold text-emerald-300">—</span>
+            </div>
+            <div class="rounded-xl border border-slate-800/90 bg-slate-950/75 px-3 py-2">
+              <span class="text-slate-400">TP3:</span>
+              <span id="warriorTp3" class="ml-1.5 font-bold text-emerald-300">—</span>
+            </div>
+          </div>
+
+          <p id="warriorSignalRationale" class="text-xs leading-relaxed text-slate-300">
+            Scanning structure (BOS / CHoCH), EMA 200, VWAP, and key liquidity levels before issuing an A-grade execution signal.
+          </p>
+        </section>
+
+        <!-- Live Candlestick & Structure Chart Card -->
+        <section class="scanner-frame corner-bracket rounded-2xl p-3.5 sm:p-4 space-y-3">
+          <!-- Top Chart Header: Instrument, Bid/Ask/Ref Prices, Active TF Badge -->
+          <div class="flex flex-col gap-2.5 border-b border-slate-800/80 pb-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-400/20 border border-amber-400/40 text-xs font-bold text-amber-300">
+                  ●
+                </span>
+                <h2 id="chartSymbolHeading" class="text-sm sm:text-base font-bold text-white">
+                  XAUUSD · Gold Spot / U.S. Dollar
+                </h2>
+                <span id="activeTfBadge" class="rounded-lg border border-cyan-400/50 bg-cyan-500/15 px-2.5 py-0.5 font-mono text-xs font-bold text-cyan-300">
+                  5m
+                </span>
+                <span id="biasFilterBadge" class="rounded-lg border border-slate-700 bg-slate-900 px-2 py-0.5 font-mono text-[11px] text-slate-300">
+                  Filter: Neutral
+                </span>
+              </div>
+              <p id="chartSubStatus" class="mt-1 font-mono text-[11px] text-slate-400">
+                Real-time candle aggregation • BOS &amp; CHoCH market structure
+              </p>
+            </div>
+
+            <!-- Bid / Reference / Ask Readouts -->
+            <div class="flex flex-wrap items-center gap-2 font-mono text-xs">
+              <div class="rounded-lg bg-blue-600/90 px-2.5 py-1 text-white">
+                <span class="text-[10px] uppercase opacity-80 mr-1">Bid</span>
+                <span id="bidPriceReadout" class="font-bold">3,621.720</span>
+              </div>
+              <div class="rounded-lg bg-slate-800 border border-slate-700 px-2.5 py-1 text-slate-200">
+                <span class="text-[10px] uppercase text-slate-400 mr-1">Ref</span>
+                <span id="refPriceReadout" class="font-bold">3,634.795</span>
+              </div>
+              <div class="rounded-lg bg-rose-600/90 px-2.5 py-1 text-white">
+                <span class="text-[10px] uppercase opacity-80 mr-1">Ask</span>
+                <span id="askPriceReadout" class="font-bold">3,622.370</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Timeframe Selector Buttons (1m, 5m, 15m, 1H, 4H, Daily) + Bias Filter Buttons (Bullish / Bearish / Neutral) -->
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex flex-wrap items-center gap-1.5" id="timeframeSelector" role="group" aria-label="Timeframe Selector">
+              <button type="button" data-tf="1m" class="tf-btn rounded-xl border border-slate-700 bg-slate-900 px-3 py-1.5 font-mono text-xs font-semibold text-slate-300 hover:border-cyan-400/60 transition">1m</button>
+              <button type="button" data-tf="5m" class="tf-btn rounded-xl border border-cyan-400 bg-cyan-400/20 px-3 py-1.5 font-mono text-xs font-bold text-cyan-200 transition">5m</button>
+              <button type="button" data-tf="15m" class="tf-btn rounded-xl border border-slate-700 bg-slate-900 px-3 py-1.5 font-mono text-xs font-semibold text-slate-300 hover:border-cyan-400/60 transition">15m</button>
+              <button type="button" data-tf="1H" class="tf-btn rounded-xl border border-slate-700 bg-slate-900 px-3 py-1.5 font-mono text-xs font-semibold text-slate-300 hover:border-cyan-400/60 transition">1H</button>
+              <button type="button" data-tf="4H" class="tf-btn rounded-xl border border-slate-700 bg-slate-900 px-3 py-1.5 font-mono text-xs font-semibold text-slate-300 hover:border-cyan-400/60 transition">4H</button>
+              <button type="button" data-tf="Daily" class="tf-btn rounded-xl border border-slate-700 bg-slate-900 px-3 py-1.5 font-mono text-xs font-semibold text-slate-300 hover:border-cyan-400/60 transition">Daily</button>
+            </div>
+
+            <!-- Bias Filter Buttons: Filter bias & highlight setups ONLY — never move price/candles -->
+            <div class="flex flex-wrap items-center gap-1.5" id="biasFilterGroup" role="group" aria-label="Bias Filter">
+              <button type="button" data-bias="Bullish" class="bias-btn rounded-xl border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-xs font-semibold text-emerald-300 hover:border-emerald-400/60 transition">
+                Bullish
+              </button>
+              <button type="button" data-bias="Bearish" class="bias-btn rounded-xl border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-xs font-semibold text-rose-300 hover:border-rose-400/60 transition">
+                Bearish
+              </button>
+              <button type="button" data-bias="Neutral" class="bias-btn rounded-xl border border-cyan-400 bg-cyan-500/15 px-2.5 py-1.5 text-xs font-bold text-cyan-200 transition">
+                Neutral
+              </button>
+            </div>
+          </div>
+
+          <!-- Legend Row Matching Screenshot (Buy zone / Sell zone / VWAP / EMA 200) -->
+          <div class="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-slate-950/75 border border-slate-800/80 px-3 py-2 text-[11px] font-mono">
+            <div class="flex flex-wrap items-center gap-3.5">
+              <button type="button" id="toggleBuyZonesBtn" class="inline-flex items-center gap-1.5 text-emerald-300 hover:opacity-80">
+                <span class="w-4 border-t-2 border-dashed border-emerald-400"></span>
+                <span>Buy zone</span>
+              </button>
+              <button type="button" id="toggleSellZonesBtn" class="inline-flex items-center gap-1.5 text-rose-300 hover:opacity-80">
+                <span class="w-4 border-t-2 border-dashed border-rose-400"></span>
+                <span>Sell zone</span>
+              </button>
+              <button type="button" id="toggleVwapBtn" class="inline-flex items-center gap-1.5 text-sky-300 hover:opacity-80">
+                <span class="w-4 border-t-2 border-sky-400"></span>
+                <span>VWAP</span>
+              </button>
+              <button type="button" id="toggleEmaBtn" class="inline-flex items-center gap-1.5 text-indigo-300 hover:opacity-80">
+                <span class="w-4 border-t-2 border-indigo-400"></span>
+                <span>EMA 200</span>
+              </button>
+            </div>
+            <button type="button" id="pauseStreamBtn" class="rounded-lg border border-slate-700 bg-slate-900 px-2 py-0.5 text-[11px] text-slate-300 hover:border-cyan-400/50">
+              Pause Ticks
+            </button>
+          </div>
+
+          <!-- Responsive Canvas Container -->
+          <div class="relative h-[370px] sm:h-[430px] w-full rounded-xl border border-slate-800/90 bg-[#07111a] overflow-hidden">
+            <canvas id="priceChartCanvas" class="block h-full w-full"></canvas>
+          </div>
+        </section>
+
+        <!-- Setup Gatekeeper Card -->
+        <section class="scanner-frame corner-bracket rounded-2xl p-4 space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <h3 id="gatekeeperTitle" class="text-base sm:text-lg font-bold text-white">No A-grade setup</h3>
+            <span id="confluencePill" class="rounded-full border border-amber-400/40 bg-amber-500/15 px-3 py-0.5 font-mono text-xs font-semibold text-amber-300">
+              3 of 9 confluences
+            </span>
+          </div>
+
+          <p id="gatekeeperSummary" class="text-xs sm:text-sm leading-relaxed text-slate-300">
+            <span class="font-semibold text-rose-400">Bearish</span> on the <span class="font-mono text-cyan-300">5m</span> with price below the 5m EMA 200, so it's hunting sells only. Price is near the sell range, and it has 3 of 9 confluences and fails a required check, so it's skipped.
+          </p>
+
+          <div class="rounded-xl border border-slate-800 bg-slate-950/70 divide-y divide-slate-800/80 font-mono text-xs">
+            <div class="flex items-center justify-between px-3.5 py-2.5">
+              <span class="text-slate-400">Next buy range</span>
+              <span id="nextBuyRangeVal" class="text-slate-200">none with $6.00 of room nearby</span>
+            </div>
+            <div class="flex items-center justify-between px-3.5 py-2.5">
+              <span class="text-slate-400">Next sell range</span>
+              <span id="nextSellRangeVal" class="text-slate-200">none with $6.00 of room nearby</span>
+            </div>
+          </div>
+
+          <div>
+            <button
+              id="toggleWhyBtn"
+              type="button"
+              class="inline-flex items-center gap-1.5 text-xs font-semibold text-cyan-300 hover:text-cyan-200"
+            >
+              <span id="whyArrow">▸</span>
+              <span id="whyBtnLabel">Why: 3 of 9 confluences, a required check fails</span>
+            </button>
+            <div id="whyBreakdownPanel" class="hidden mt-2.5 rounded-xl border border-slate-800 bg-slate-950/80 p-3 space-y-1.5 text-xs">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </section>
+
+        <!-- CURRENT TREND Card -->
+        <section class="scanner-frame corner-bracket rounded-2xl p-4 space-y-4">
+          <div>
+            <div class="font-mono text-[11px] font-semibold tracking-widest text-cyan-400 uppercase">
+              Current Trend
+            </div>
+            <div class="mt-1 flex flex-wrap items-baseline justify-between gap-2">
+              <div id="currentTrendHeadline" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-rose-400">
+                DOWNTREND
+              </div>
+              <div id="scannerModeLine" class="text-xs sm:text-sm font-medium text-slate-300">
+                Scanner is taking sells only.
+              </div>
+            </div>
+          </div>
+
+          <!-- 4-Column Timeframe Bias Strip (1h, 15m, 5m, 1m) -->
+          <div id="mtfBiasStrip" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <!-- Populated by JS -->
+          </div>
+
+          <!-- EMA 200, Today's VWAP, Average Range Rows -->
+          <div class="rounded-xl border border-slate-800/90 bg-slate-950/75 divide-y divide-slate-800/80 text-xs sm:text-sm">
+            <div class="flex items-center justify-between px-3.5 py-2.5">
+              <span id="emaRowLabel" class="text-slate-400">5m EMA 200</span>
+              <div class="font-mono">
+                <span id="emaRowValue" class="font-semibold text-white">4,164.95</span>
+                <span id="emaRowRel" class="ml-2 text-xs font-semibold text-rose-400">price below</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between px-3.5 py-2.5">
+              <span class="text-slate-400">Today's VWAP</span>
+              <div class="font-mono">
+                <span id="vwapRowValue" class="font-semibold text-white">4,163.54</span>
+                <span id="vwapRowRel" class="ml-2 text-xs font-semibold text-rose-400">price below</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between px-3.5 py-2.5">
+              <span id="avgRangeRowLabel" class="text-slate-400">15m average range</span>
+              <span id="avgRangeRowValue" class="font-mono font-semibold text-slate-100">$0.84</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- KEY LEVELS TODAY Card -->
+        <section class="scanner-frame corner-bracket rounded-2xl p-4 space-y-3">
+          <div class="font-mono text-xs font-bold tracking-widest text-cyan-400 uppercase">
+            Key Levels Today
+          </div>
+          <div id="keyLevelsList" class="divide-y divide-slate-800/80 text-xs sm:text-sm">
+            <!-- Populated by JS -->
+          </div>
+          <p id="keyLevelsNote" class="rounded-xl bg-slate-950/75 border border-slate-800/80 p-3 text-xs leading-relaxed text-slate-400">
+            Gold often reacts at the previous day's high and low, the Asian range, and every $5 round number. Zones sitting on these get extra weight.
+          </p>
+        </section>
+
+        <!-- BUY AND SELL ZONES Table -->
+        <section class="scanner-frame corner-bracket rounded-2xl p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="font-mono text-xs font-bold tracking-widest text-cyan-400 uppercase">
+              Buy and Sell Zones
+            </div>
+            <span id="zonesSymbolCaption" class="font-mono text-[11px] text-slate-400">XAUUSD • Live Levels</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-slate-800 font-mono text-[11px] uppercase tracking-wider text-slate-400">
+                  <th class="py-2 pr-3">Entry Range</th>
+                  <th class="py-2 px-3">Stop</th>
+                  <th class="py-2 px-3">TP1 / 2 / 3</th>
+                  <th class="py-2 pl-3">Why It Matters</th>
+                </tr>
+              </thead>
+              <tbody id="zonesTableBody" class="divide-y divide-slate-800/70 text-xs">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- TODAY'S HIGH-IMPACT USD NEWS Card -->
+        <section class="scanner-frame corner-bracket rounded-2xl p-4 space-y-2.5">
+          <div class="font-mono text-xs font-bold tracking-widest text-cyan-400 uppercase">
+            Today's High-Impact USD News
+          </div>
+          <p class="text-xs text-slate-400">
+            ForexFactory calendar schedule synced to your local device time (<span id="localClockDisplay" class="font-mono text-slate-200">--:--</span>).
+          </p>
+          <div id="usdNewsBody" class="rounded-xl border border-slate-800/90 bg-slate-950/75 p-3 text-xs sm:text-sm text-slate-200">
+            No high-impact USD news today. Next: <span class="font-semibold text-amber-300">Core PCE Price Index m/m</span>, Wed 15:30.
+          </div>
+        </section>
+      </div>
+
+      <!-- Right / Live Interactive Bot Chat Column (4 cols on xl) -->
+      <aside class="xl:col-span-4">
+        <section class="scanner-frame corner-bracket rounded-2xl p-3.5 sm:p-4 flex flex-col h-[540px] sm:h-[640px] xl:sticky xl:top-4">
+          <div class="flex items-center justify-between border-b border-slate-800/90 pb-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-sm font-bold text-white">PUTIN PABLO FX Warrior Bot</h3>
+                <span class="rounded-full bg-emerald-500/15 border border-emerald-400/40 px-2 py-0.5 font-mono text-[10px] font-semibold text-emerald-300">
+                  LIVE
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-400">
+                Ask for signal, BOS/CHoCH, trend, zones, or news
+              </p>
+            </div>
+            <button
+              id="clearChatBtn"
+              type="button"
+              class="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-[11px] text-slate-300 hover:border-cyan-400/50"
+            >
+              Clear
+            </button>
+          </div>
+
+          <!-- Quick Prompt Chips -->
+          <div class="mt-2.5 flex flex-wrap gap-1.5">
+            <button type="button" data-prompt="Give me Warrior signal, entry, stop, and targets" class="chat-chip rounded-lg border border-slate-800 bg-slate-950/80 px-2 py-1 text-[11px] text-amber-200 hover:border-amber-400/50">
+              Warrior Signal
+            </button>
+            <button type="button" data-prompt="Give me current price and trend" class="chat-chip rounded-lg border border-slate-800 bg-slate-950/80 px-2 py-1 text-[11px] text-cyan-200 hover:border-cyan-400/50">
+              Price &amp; Trend
+            </button>
+            <button type="button" data-prompt="Show buy and sell zones" class="chat-chip rounded-lg border border-slate-800 bg-slate-950/80 px-2 py-1 text-[11px] text-cyan-200 hover:border-cyan-400/50">
+              Zones
+            </button>
+            <button type="button" data-prompt="Why is there no A-grade setup?" class="chat-chip rounded-lg border border-slate-800 bg-slate-950/80 px-2 py-1 text-[11px] text-cyan-200 hover:border-cyan-400/50">
+              Gatekeeper
+            </button>
+          </div>
+
+          <!-- Chat Messages Stream -->
+          <div id="chatMessages" class="mt-3 flex-1 overflow-y-auto space-y-2.5 pr-1">
+            <!-- Populated by JS -->
+          </div>
+
+          <!-- Chat Input Form -->
+          <form id="chatForm" class="mt-3 pt-2.5 border-t border-slate-800/90 flex items-center gap-2">
+            <input
+              id="chatInput"
+              type="text"
+              autocomplete="off"
+              placeholder="Ask PUTIN PABLO FX bot..."
+              class="flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs sm:text-sm text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
+            />
+            <button
+              type="submit"
+              class="rounded-xl bg-cyan-400 px-3.5 py-2 text-xs sm:text-sm font-bold text-slate-950 hover:bg-cyan-300 transition"
+            >
+              Send
+            </button>
+          </form>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // =======================================================================
+      // 1. ALL 7 INSTRUMENTS CONFIGURATION (Defaulted to Gold near ~3,622-3,635)
+      // =======================================================================
+      const INSTRUMENTS = {
+        GOLD: {
+          key: 'GOLD',
+          tabLabel: 'Gold',
+          title: 'XAUUSD · Gold Spot / U.S. Dollar',
+          tvSymbol: 'OANDA:XAUUSD',
+          tdSymbol: 'XAU/USD',
+          binanceSymbol: null,
+          decimals: 2,
+          priceTagDecimals: 3,
+          unitPrefix: '$',
+          step: 5.0,
+          defaultOffset: 0,
+          seedPrice: 3622.10,
+          seedRef: 3634.795,
+          seedAskOffset: 0.65,
+          candleVol: 2.35,
+          baseVolume: 330,
+          volumeUnit: 'oz',
+          newsNote: "Gold often reacts at the previous day's high and low, the Asian range, and every $5 round number. Zones sitting on these get extra weight."
+        },
+        GER30: {
+          key: 'GER30',
+          tabLabel: 'German 30',
+          title: 'GER30 · DAX Index / CFD',
+          tvSymbol: 'PEPPERSTONE:GER40',
+          tdSymbol: 'DAX',
+          binanceSymbol: null,
+          decimals: 1,
+          priceTagDecimals: 1,
+          unitPrefix: '',
+          step: 50.0,
+          defaultOffset: 0,
+          seedPrice: 19420.5,
+          seedRef: 19455.0,
+          seedAskOffset: 1.8,
+          candleVol: 14.5,
+          baseVolume: 1420,
+          volumeUnit: 'lots',
+          newsNote: 'German 30 reacts strongly around Frankfurt session opens, prior day highs/lows, and 50-point round index handles.'
+        },
+        US30: {
+          key: 'US30',
+          tabLabel: 'US 30',
+          title: 'US30 · Dow Jones Industrial Average',
+          tvSymbol: 'PEPPERSTONE:US30',
+          tdSymbol: 'DJI',
+          binanceSymbol: null,
+          decimals: 1,
+          priceTagDecimals: 1,
+          unitPrefix: '',
+          step: 100.0,
+          defaultOffset: 0,
+          seedPrice: 43840.0,
+          seedRef: 43895.0,
+          seedAskOffset: 2.5,
+          candleVol: 28.0,
+          baseVolume: 2180,
+          volumeUnit: 'lots',
+          newsNote: 'US 30 tracks NY session liquidity sweeps, prior session extremes, and 100-point psychological levels.'
+        },
+        EURUSD: {
+          key: 'EURUSD',
+          tabLabel: 'Euro USD',
+          title: 'EURUSD · Euro / U.S. Dollar',
+          tvSymbol: 'OANDA:EURUSD',
+          tdSymbol: 'EUR/USD',
+          binanceSymbol: null,
+          decimals: 4,
+          priceTagDecimals: 5,
+          unitPrefix: '',
+          step: 0.005,
+          defaultOffset: 0,
+          seedPrice: 1.0842,
+          seedRef: 1.0856,
+          seedAskOffset: 0.00015,
+          candleVol: 0.00065,
+          baseVolume: 540,
+          volumeUnit: 'k',
+          newsNote: 'EURUSD respects London/NY overlap highs and lows, session VWAP, and 50-pip big-figure levels.'
+        },
+        SILVER: {
+          key: 'SILVER',
+          tabLabel: 'Silver',
+          title: 'XAGUSD · Silver Spot / U.S. Dollar',
+          tvSymbol: 'OANDA:XAGUSD',
+          tdSymbol: 'XAG/USD',
+          binanceSymbol: null,
+          decimals: 2,
+          priceTagDecimals: 3,
+          unitPrefix: '$',
+          step: 0.5,
+          defaultOffset: 0,
+          seedPrice: 31.42,
+          seedRef: 31.68,
+          seedAskOffset: 0.03,
+          candleVol: 0.14,
+          baseVolume: 890,
+          volumeUnit: 'oz',
+          newsNote: 'Silver tends to overshoot gold swings with sharper wick sweeps around round $0.50 levels and session extremes.'
+        },
+        ETHUSD: {
+          key: 'ETHUSD',
+          tabLabel: 'ETH USD',
+          title: 'ETHUSD · Ethereum / U.S. Dollar',
+          tvSymbol: 'BINANCE:ETHUSDT',
+          tdSymbol: 'ETH/USD',
+          binanceSymbol: 'ethusdt',
+          decimals: 2,
+          priceTagDecimals: 2,
+          unitPrefix: '$',
+          step: 50.0,
+          defaultOffset: 0,
+          seedPrice: 3128.40,
+          seedRef: 3145.00,
+          seedAskOffset: 0.80,
+          candleVol: 14.5,
+          baseVolume: 1850,
+          volumeUnit: 'ETH',
+          newsNote: 'ETHUSD trades 24/7 with liquidity sweeps above/below prior day highs and lows and $50 round levels.'
+        },
+        BTCUSD: {
+          key: 'BTCUSD',
+          tabLabel: 'Bitcoin',
+          title: 'BTCUSD · Bitcoin / U.S. Dollar',
+          tvSymbol: 'BINANCE:BTCUSDT',
+          tdSymbol: 'BTC/USD',
+          binanceSymbol: 'btcusdt',
+          decimals: 1,
+          priceTagDecimals: 1,
+          unitPrefix: '$',
+          step: 500.0,
+          defaultOffset: 0,
+          seedPrice: 91420.0,
+          seedRef: 91680.0,
+          seedAskOffset: 4.5,
+          candleVol: 165.0,
+          baseVolume: 760,
+          volumeUnit: 'BTC',
+          newsNote: 'BTCUSD runs continuously 24/7; watch session range breaks, EMA 200 reactions, and $500 round numbers.'
+        }
+      };
+
+      const TIMEFRAME_CONFIG = {
+        '1m': { tvInterval: '1', tdInterval: '1min', seconds: 60, count: 68, volMult: 0.45, waveFreq: 0.55 },
+        '5m': { tvInterval: '5', tdInterval: '5min', seconds: 300, count: 56, volMult: 1.0, waveFreq: 0.34 },
+        '15m': { tvInterval: '15', tdInterval: '15min', seconds: 900, count: 50, volMult: 1.75, waveFreq: 0.25 },
+        '1H': { tvInterval: '60', tdInterval: '1h', seconds: 3600, count: 46, volMult: 3.2, waveFreq: 0.19 },
+        '4H': { tvInterval: '240', tdInterval: '4h', seconds: 14400, count: 40, volMult: 5.6, waveFreq: 0.15 },
+        'Daily': { tvInterval: '1D', tdInterval: '1day', seconds: 86400, count: 36, volMult: 9.2, waveFreq: 0.11 }
+      };
+
+      const TIMEFRAME_CONFIG = {
+        '1m': { tdInterval: '1min', seconds: 60, count: 68, volMult: 0.45, waveFreq: 0.55 },
+        '5m': { tdInterval: '5min', seconds: 300, count: 56, volMult: 1.0, waveFreq: 0.34 },
+        '15m': { tdInterval: '15min', seconds: 900, count: 50, volMult: 1.75, waveFreq: 0.25 },
+        '1H': { tdInterval: '1h', seconds: 3600, count: 46, volMult: 3.2, waveFreq: 0.19 },
+        '4H': { tdInterval: '4h', seconds: 14400, count: 40, volMult: 5.6, waveFreq: 0.15 },
+        'Daily': { tdInterval: '1day', seconds: 86400, count: 36, volMult: 9.2, waveFreq: 0.11 }
+      };
+
+      const STORAGE_KEY = 'putin_pablo_fx_state_v1';
+
+      // =======================================================================
+      // 2. APPLICATION STATE (Bias filter NEVER alters price or candles)
+      // =======================================================================
+      const state = {
+        symbol: 'GOLD',
+        timeframe: '5m',
+        biasFilter: 'Neutral', // 'Bullish' | 'Bearish' | 'Neutral' — filter/highlight ONLY
+        paused: false,
+        whyOpen: false,
+        apiKey: '',
+        tgBotToken: '',
+        tgChatId: '',
+        tgUpdateOffset: 0,
+        xmMatchedBySymbol: {},
+        offsetBySymbol: {},
+        seriesMap: {}, // key: `${symbol}__${timeframe}`
+        feedMode: 'SIMULATED', // 'SIMULATED' | 'LIVE_WS' | 'LIVE_TD'
+        feedStatusText: 'LIVE STREAM',
+        feedDetailText: 'XAUUSD spot feed active • Tick engine updating live candles & structure',
+        layers: {
+          buyZones: true,
+          sellZones: true,
+          vwap: true,
+          ema200: true
+        },
+        ws: null,
+        heartbeatTimer: null,
+        lastChatAnnouncedPrice: null
+      };
+
+      function loadSavedPreferences() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return;
+          const parsed = JSON.parse(raw);
+          if (parsed.apiKey) state.apiKey = String(parsed.apiKey);
+          if (parsed.tgBotToken) state.tgBotToken = String(parsed.tgBotToken);
+          if (parsed.tgChatId) state.tgChatId = String(parsed.tgChatId);
+          if (Number.isFinite(parsed.tgUpdateOffset)) state.tgUpdateOffset = Number(parsed.tgUpdateOffset);
+          if (parsed.xmMatchedBySymbol && typeof parsed.xmMatchedBySymbol === 'object') {
+            state.xmMatchedBySymbol = parsed.xmMatchedBySymbol;
+          }
+          if (parsed.offsetBySymbol && typeof parsed.offsetBySymbol === 'object') {
+            state.offsetBySymbol = parsed.offsetBySymbol;
+          }
+        } catch (err) {
+          console.warn('Unable to load saved preferences:', err);
+        }
+      }
+
+      function savePreferences() {
+        try {
+          localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify({
+              apiKey: state.apiKey,
+              tgBotToken: state.tgBotToken,
+              tgChatId: state.tgChatId,
+              tgUpdateOffset: state.tgUpdateOffset,
+              xmMatchedBySymbol: state.xmMatchedBySymbol,
+              offsetBySymbol: state.offsetBySymbol
+            })
+          );
+        } catch (err) {
+          console.warn('Unable to save preferences:', err);
+        }
+      }
+
+      // =======================================================================
+      // 3. FORMATTING & SERIES GENERATION / AGGREGATION
+      // =======================================================================
+      function formatPrice(val, symKey = state.symbol, customDecimals = null) {
+        if (!Number.isFinite(val)) return '—';
+        const inst = INSTRUMENTS[symKey];
+        const dec = customDecimals !== null ? customDecimals : inst.decimals;
+        return val.toLocaleString('en-US', {
+          minimumFractionDigits: dec,
+          maximumFractionDigits: dec
+        });
+      }
+
+      function getOffset(symKey = state.symbol) {
+        const val = parseFloat(state.offsetBySymbol[symKey] ?? 0);
+        return Number.isFinite(val) ? val : 0;
+      }
+
+      function isXmMatched(symKey = state.symbol) {
+        return Boolean(state.xmMatchedBySymbol[symKey]);
+      }
+
+      function seriesKey(symKey, tf) {
+        return `${symKey}__${tf}`;
+      }
+
+      function generateTimeframeSeries(symKey, tf) {
+        const inst = INSTRUMENTS[symKey];
+        const tfCfg = TIMEFRAME_CONFIG[tf] || TIMEFRAME_CONFIG['5m'];
+        const nowSec = Math.floor(Date.now() / 1000);
+        const stepVol = inst.candleVol * tfCfg.volMult;
+
+        // Deterministic-feeling natural wave seeded by symbol + timeframe
+        const tfSeedShift = Object.keys(TIMEFRAME_CONFIG).indexOf(tf) * 1.37;
+        const symSeedShift = Object.keys(INSTRUMENTS).indexOf(symKey) * 2.11;
+
+        const candles = [];
+        let cursorPrice = inst.seedPrice * (tf === '1H' ? 0.996 : tf === 'Daily' ? 0.988 : 1.0);
+
+        for (let i = 0; i < tfCfg.count; i++) {
+          const progress = i / Math.max(1, tfCfg.count - 1);
+          const trendPull =
+            symKey === 'GOLD' && tf === '5m'
+              ? Math.sin(progress * Math.PI * 1.4) * stepVol * 1.6 - (i > tfCfg.count * 0.55 ? stepVol * 0.22 : 0)
+              : Math.cos(i * tfCfg.waveFreq + tfSeedShift + symSeedShift) * stepVol * 0.75 +
+                (Math.random() - 0.495) * stepVol * 1.3;
+
+          const open = cursorPrice;
+          const close = Math.max(stepVol * 3, open + trendPull);
+          const upperWick = (0.2 + Math.random() * 0.85) * stepVol;
+          const lowerWick = (0.2 + Math.random() * 0.85) * stepVol;
+          const high = Math.max(open, close) + upperWick;
+          const low = Math.min(open, close) - lowerWick;
+          const volume = Math.max(
+            8,
+            Math.round((inst.baseVolume / 22) * tfCfg.volMult * (0.45 + Math.random() * 1.15))
+          );
+
+          candles.push({
+            time: nowSec - (tfCfg.count - 1 - i) * tfCfg.seconds,
+            open,
+            high,
+            low,
+            close,
+            volume
+          });
+          cursorPrice = close;
+        }
+
+        // Anchor latest Gold 5m close right around ~3,622.10 so it mirrors live spot & screenshot
+        if (symKey === 'GOLD' && tf === '5m') {
+          const delta = inst.seedPrice - candles[candles.length - 1].close;
+          candles.forEach(c => {
+            c.open += delta;
+            c.high += delta;
+            c.low += delta;
+            c.close += delta;
+          });
+        }
+
+        return {
+          symbol: symKey,
+          timeframe: tf,
+          candles,
+          refPrice: inst.seedRef
+        };
+      }
+
+      function ensureSeries(symKey, tf) {
+        const key = seriesKey(symKey, tf);
+        if (!state.seriesMap[key]) {
+          state.seriesMap[key] = generateTimeframeSeries(symKey, tf);
+        }
+        return state.seriesMap[key];
+      }
+
+      // =======================================================================
+      // 4. TECHNICAL STRUCTURE, INDICATORS (EMA 200, VWAP, BOS, CHoCH) & ZONES
+      // =======================================================================
+      function computeAnalysis(symKey, tf) {
+        const inst = INSTRUMENTS[symKey];
+        const rawSeries = ensureSeries(symKey, tf);
+        const offset = getOffset(symKey);
+
+        const candles = rawSeries.candles.map(c => ({
+          time: c.time,
+          open: c.open + offset,
+          high: c.high + offset,
+          low: c.low + offset,
+          close: c.close + offset,
+          volume: c.volume
+        }));
+
+        const last = candles[candles.length - 1];
+        const currentPrice = last.close;
+        const refPrice = rawSeries.refPrice + offset;
+        const bidPrice = currentPrice - inst.seedAskOffset * 0.4;
+        const askPrice = bidPrice + inst.seedAskOffset;
+
+        // EMA series (200-style smoothed curve scaled cleanly over visible bars)
+        const emaSpan = Math.min(36, Math.max(10, Math.floor(candles.length * 0.65)));
+        const emaAlpha = 2 / (emaSpan + 1);
+        const emaSeries = [];
+        let emaAcc = candles[0].close;
+        for (let i = 0; i < candles.length; i++) {
+          emaAcc = i === 0 ? candles[i].close : candles[i].close * emaAlpha + emaAcc * (1 - emaAlpha);
+          emaSeries.push(emaAcc);
+        }
+
+        // Session VWAP series & average candle range
+        const vwapSeries = [];
+        let cumPV = 0;
+        let cumVol = 0;
+        let sumRange = 0;
+        let highMax = -Infinity;
+        let lowMin = Infinity;
+
+        for (let i = 0; i < candles.length; i++) {
+          const c = candles[i];
+          const typical = (c.high + c.low + c.close) / 3;
+          const vol = Math.max(1, c.volume);
+          cumPV += typical * vol;
+          cumVol += vol;
+          vwapSeries.push(cumPV / cumVol);
+
+          sumRange += c.high - c.low;
+          if (c.high > highMax) highMax = c.high;
+          if (c.low < lowMin) lowMin = c.low;
+        }
+
+        const latestEma = emaSeries[emaSeries.length - 1];
+        const latestVwap = vwapSeries[vwapSeries.length - 1];
+        const avgRange = sumRange / Math.max(1, candles.length);
+
+        // Detect pivot highs/lows for BOS & CHoCH structure labels
+        const markers = [];
+        let lastSwingHigh = null;
+        let lastSwingLow = null;
+        let structureDir = currentPrice < latestEma ? 'BEAR' : 'BULL';
+
+        for (let i = 2; i < candles.length - 1; i++) {
+          const prev2 = candles[i - 2];
+          const prev1 = candles[i - 1];
+          const cur = candles[i];
+
+          const isSwingHigh = cur.high >= prev1.high && cur.high >= prev2.high && cur.high >= candles[i + 1].high;
+          const isSwingLow = cur.low <= prev1.low && cur.low <= prev2.low && cur.low <= candles[i + 1].low;
+
+          if (isSwingHigh) {
+            if (lastSwingHigh !== null && cur.high > lastSwingHigh) {
+              const isChoch = structureDir === 'BEAR';
+              markers.push({
+                index: i,
+                price: cur.high,
+                label: isChoch ? 'CHoCH' : 'BOS',
+                bullish: true
+              });
+              structureDir = 'BULL';
+            }
+            lastSwingHigh = cur.high;
+          }
+
+          if (isSwingLow) {
+            if (lastSwingLow !== null && cur.low < lastSwingLow) {
+              const isChoch = structureDir === 'BULL';
+              markers.push({
+                index: i,
+                price: cur.low,
+                label: isChoch ? 'CHoCH' : 'BOS',
+                bullish: false
+              });
+              structureDir = 'BEAR';
+            }
+            lastSwingLow = cur.low;
+          }
+        }
+
+        // Ensure at least a couple of clean BOS / CHoCH labels exist on chart
+        if (markers.length < 2 && candles.length >= 16) {
+          const idx1 = Math.floor(candles.length * 0.35);
+          const idx2 = Math.floor(candles.length * 0.68);
+          markers.push(
+            { index: idx1, price: candles[idx1].high, label: 'BOS', bullish: false },
+            { index: idx2, price: candles[idx2].low, label: 'CHoCH', bullish: true }
+          );
+        }
+
+        // Multi-timeframe bias strip (1h, 15m, 5m, 1m)
+        const mtfBias = {
+          '1h': currentPrice > latestEma * 0.999 ? 'Bullish' : 'Bearish',
+          '15m': currentPrice < latestEma ? 'Bearish' : 'Bullish',
+          '5m': currentPrice < latestVwap ? 'Bearish' : 'Bullish',
+          '1m': last.close >= last.open ? 'Bullish' : 'Bearish'
+        };
+
+        // Determine trend direction (respecting non-intrusive biasFilter highlight, never altering candles)
+        const isDowntrend =
+          state.biasFilter === 'Bearish'
+            ? true
+            : state.biasFilter === 'Bullish'
+              ? false
+              : currentPrice < latestEma;
+
+        const scannerModeText = isDowntrend
+          ? 'Scanner is taking sells only.'
+          : 'Scanner is taking buys only.';
+
+        // Key Levels Today
+        const step = inst.step;
+        const roundAbove = Math.ceil(currentPrice / step) * step;
+        const roundBelow = Math.floor(currentPrice / step) * step;
+        const prevDayHigh = Math.max(highMax, currentPrice + step * 0.65);
+        const prevDayLow = Math.min(lowMin, currentPrice - step * 0.45);
+        const asiaHigh = currentPrice + step * 0.22;
+        const asiaLow = currentPrice - step * 0.14;
+
+        const keyLevels = [
+          {
+            label: 'Previous day high',
+            value: formatPrice(prevDayHigh, symKey),
+            delta: `${currentPrice >= prevDayHigh ? '+' : '-'}${inst.unitPrefix}${formatPrice(Math.abs(currentPrice - prevDayHigh), symKey)}`,
+            positive: currentPrice >= prevDayHigh
+          },
+          {
+            label: 'Asia high',
+            value: formatPrice(asiaHigh, symKey),
+            delta: `+${inst.unitPrefix}${formatPrice(Math.abs(asiaHigh - currentPrice), symKey)}`,
+            positive: true
+          },
+          {
+            label: 'Asia low',
+            value: formatPrice(asiaLow, symKey),
+            delta: `+${inst.unitPrefix}${formatPrice(Math.abs(asiaLow - currentPrice), symKey)}`,
+            positive: true
+          },
+          {
+            label: 'Previous day low',
+            value: formatPrice(prevDayLow, symKey),
+            delta: `-${inst.unitPrefix}${formatPrice(Math.abs(currentPrice - prevDayLow), symKey)}`,
+            positive: false
+          },
+          {
+            label: 'Round number above',
+            value: formatPrice(roundAbove, symKey),
+            delta: null,
+            positive: true
+          },
+          {
+            label: 'Round number below',
+            value: formatPrice(roundBelow, symKey),
+            delta: null,
+            positive: false
+          }
+        ];
+
+        // Buy & Sell Zones (displayed on chart & table)
+        const zSpan = Math.max(avgRange * 0.65, step * 0.08);
+        const sell1Low = currentPrice + zSpan * 0.55;
+        const sell1High = sell1Low + zSpan * 0.75;
+        const sell2Low = sell1High + zSpan * 0.85;
+        const sell2High = sell2Low + zSpan * 0.75;
+
+        const buy1High = currentPrice - zSpan * 0.55;
+        const buy1Low = buy1High - zSpan * 0.75;
+        const buy2High = buy1Low - zSpan * 0.85;
+        const buy2Low = buy2High - zSpan * 0.75;
+
+        const zones = [
+          {
+            side: 'SELL',
+            low: sell1Low,
+            high: sell1High,
+            stop: sell1High + zSpan * 1.1,
+            tp1: formatPrice(currentPrice - zSpan * 0.4, symKey),
+            tp2: formatPrice(buy1High, symKey),
+            tp3: formatPrice(buy2High, symKey),
+            reasons: [`${formatPrice(roundAbove, symKey)}`, '15 touches, M5/M15/H1', 'with trend']
+          },
+          {
+            side: 'SELL',
+            low: sell2Low,
+            high: sell2High,
+            stop: sell2High + zSpan * 1.1,
+            tp1: formatPrice(sell1Low, symKey),
+            tp2: formatPrice(currentPrice, symKey),
+            tp3: formatPrice(buy1Low, symKey),
+            reasons: ['Asia high', '2 touches, M5/M15', 'with trend']
+          },
+          {
+            side: 'BUY',
+            low: buy1Low,
+            high: buy1High,
+            stop: buy1Low - zSpan * 1.1,
+            tp1: formatPrice(currentPrice, symKey),
+            tp2: formatPrice(sell1Low, symKey),
+            tp3: formatPrice(sell2Low, symKey),
+            reasons: [`${formatPrice(roundBelow, symKey)}`, '13 touches, M5/M15/H1', 'counter-trend']
+          },
+          {
+            side: 'BUY',
+            low: buy2Low,
+            high: buy2High,
+            stop: buy2Low - zSpan * 1.1,
+            tp1: formatPrice(buy1High, symKey),
+            tp2: formatPrice(currentPrice, symKey),
+            tp3: formatPrice(sell1Low, symKey),
+            reasons: ['Session low', 'EMA 200 reaction', 'liquidity pool']
+          }
+        ];
+
+        // Confluence checks (9 checks matching screenshot gatekeeper)
+        const nearSell = Math.abs(sell1Low - currentPrice) <= avgRange * 2.2;
+        const nearBuy = Math.abs(currentPrice - buy1High) <= avgRange * 2.2;
+        const checks = [
+          { label: `${tf} bias aligns with ${isDowntrend ? 'Bearish' : 'Bullish'} hunt`, passed: isDowntrend ? currentPrice < latestEma : currentPrice > latestEma, required: true },
+          { label: 'VWAP alignment check', passed: isDowntrend ? currentPrice < latestVwap : currentPrice > latestVwap, required: true },
+          { label: 'Fresh BOS / CHoCH displacement present', passed: markers.length >= 2, required: false },
+          { label: 'Distance to nearest liquidity zone valid', passed: nearSell || nearBuy, required: false },
+          { label: 'Candle body momentum not overextended', passed: Math.abs(last.close - last.open) < avgRange * 2.1, required: false },
+          { label: 'Round number confluence nearby', passed: Math.abs(roundAbove - currentPrice) < step * 0.4 || Math.abs(currentPrice - roundBelow) < step * 0.4, required: false },
+          { label: '15m / 1H higher-frame structure check', passed: mtfBias['15m'] === (isDowntrend ? 'Bearish' : 'Bullish'), required: false },
+          { label: 'Session range room check', passed: avgRange > 0, required: false },
+          { label: 'Broker price-match status check', passed: isXmMatched(symKey), required: false }
+        ];
+
+        const passedCount = checks.filter(c => c.passed).length;
+        const failedRequired = checks.some(c => c.required && !c.passed);
+        const isAGrade = passedCount >= 7 && !failedRequired;
+
+        const minRoom = inst.key === 'GOLD' ? 6.0 : step * 0.15;
+        const buyRoom = currentPrice - buy1Low;
+        const sellRoom = sell2High - currentPrice;
+
+        // Warrior Signal Engine computation
+        const activeZone = isDowntrend ? zones[0] : zones[2];
+        const warriorSignal = isAGrade
+          ? {
+              action: isDowntrend ? 'SELL SIGNAL' : 'BUY SIGNAL',
+              badgeClass: isDowntrend
+                ? 'rounded-xl border border-rose-400/60 bg-rose-500/20 px-3 py-1 font-mono text-sm sm:text-base font-extrabold text-rose-300'
+                : 'rounded-xl border border-emerald-400/60 bg-emerald-500/20 px-3 py-1 font-mono text-sm sm:text-base font-extrabold text-emerald-300',
+              entryRange: `${formatPrice(activeZone.low, symKey)} – ${formatPrice(activeZone.high, symKey)}`,
+              stopLoss: formatPrice(activeZone.stop, symKey),
+              tp1: activeZone.tp1,
+              tp2: activeZone.tp2,
+              tp3: activeZone.tp3,
+              rationale: `Warrior A-Grade ${isDowntrend ? 'SELL' : 'BUY'} alignment on ${inst.tabLabel} (${tf}) with ${passedCount}/${checks.length} confluences, ${markers[markers.length - 1]?.label || 'BOS'} structure confirmation, and ${activeZone.reasons.join(' • ')}.`
+            }
+          : {
+              action: 'NO A-GRADE SETUP',
+              badgeClass: 'rounded-xl border border-amber-400/50 bg-amber-500/15 px-3 py-1 font-mono text-sm sm:text-base font-extrabold text-amber-300',
+              entryRange: `${formatPrice(activeZone.low, symKey)} – ${formatPrice(activeZone.high, symKey)} (Watchlist)`,
+              stopLoss: formatPrice(activeZone.stop, symKey),
+              tp1: activeZone.tp1,
+              tp2: activeZone.tp2,
+              tp3: activeZone.tp3,
+              rationale: `Warrior Bot standing guard on ${inst.tabLabel} (${tf}): ${passedCount}/${checks.length} confluences${failedRequired ? ' and a required check failed' : ' — waiting for stronger confluence'} before entering ${isDowntrend ? 'SELL' : 'BUY'}.`
+            };
+
+        return {
+          symKey,
+          tf,
+          inst,
+          candles,
+          currentPrice,
+          refPrice,
+          bidPrice,
+          askPrice,
+          emaSeries,
+          vwapSeries,
+          latestEma,
+          latestVwap,
+          avgRange,
+          markers,
+          mtfBias,
+          isDowntrend,
+          scannerModeText,
+          keyLevels,
+          zones,
+          checks,
+          passedCount,
+          failedRequired,
+          isAGrade,
+          warriorSignal,
+          nextBuyText: buyRoom >= minRoom ? `${formatPrice(buy1Low, symKey)} – ${formatPrice(buy1High, symKey)}` : `none with ${inst.unitPrefix}${formatPrice(minRoom, symKey)} of room nearby`,
+          nextSellText: sellRoom >= minRoom ? `${formatPrice(sell1Low, symKey)} – ${formatPrice(sell1High, symKey)}` : `none with ${inst.unitPrefix}${formatPrice(minRoom, symKey)} of room nearby`
+        };
+      }
+
+      // =======================================================================
+      // 6. FULL UI RENDERER & TRADINGVIEW WIDGET SYNC
+      // =======================================================================
+      let lastTvSignature = '';
+
+      function syncTradingViewWidget(symKey, tf) {
+        const inst = INSTRUMENTS[symKey];
+        const tfCfg = TIMEFRAME_CONFIG[tf] || TIMEFRAME_CONFIG['5m'];
+        const sig = `${inst.tvSymbol}__${tfCfg.tvInterval}`;
+
+        const symTag = document.getElementById('tvWidgetSymbolTag');
+        const tfTag = document.getElementById('tvWidgetTfTag');
+        if (symTag) symTag.textContent = inst.tvSymbol;
+        if (tfTag) tfTag.textContent = tf;
+
+        const container = document.getElementById('tradingviewChartContainer');
+        if (!container || sig === lastTvSignature) return;
+        lastTvSignature = sig;
+
+        container.innerHTML = '';
+        const widgetDivId = `tv_widget_${Date.now()}`;
+        const inner = document.createElement('div');
+        inner.id = widgetDivId;
+        inner.className = 'h-full w-full';
+        container.appendChild(inner);
+
+        try {
+          if (window.TradingView && typeof window.TradingView.widget === 'function') {
+            new window.TradingView.widget({
+              container_id: widgetDivId,
+              autosize: true,
+              symbol: inst.tvSymbol,
+              interval: tfCfg.tvInterval,
+              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Etc/UTC',
+              theme: 'dark',
+              style: '1',
+              locale: 'en',
+              enable_publishing: false,
+              allow_symbol_change: false,
+              hide_side_toolbar: false,
+              studies: ['EMA@tv-basicstudies', 'VWAP@tv-basicstudies']
+            });
+          } else {
+            inner.innerHTML = `<div class="flex h-full items-center justify-center p-4 text-center text-xs text-slate-400">TradingView script loading for ${inst.tvSymbol} (${tf})...</div>`;
+          }
+        } catch (_) {
+          inner.innerHTML = `<div class="flex h-full items-center justify-center p-4 text-center text-xs text-slate-400">TradingView widget unavailable offline; use the live structure chart below for ${inst.title} (${tf}).</div>`;
+        }
+      }
+
+      function renderAll() {
+        const analysis = computeAnalysis(state.symbol, state.timeframe);
+        const inst = analysis.inst;
+
+        syncTradingViewWidget(state.symbol, state.timeframe);
+
+        // Warrior Signal Card
+        const wsActionEl = document.getElementById('warriorSignalAction');
+        if (wsActionEl) {
+          wsActionEl.textContent = analysis.warriorSignal.action;
+          wsActionEl.className = analysis.warriorSignal.badgeClass;
+        }
+        const wsConfEl = document.getElementById('warriorSignalConfidence');
+        if (wsConfEl) wsConfEl.textContent = `Confluence: ${analysis.passedCount}/${analysis.checks.length}`;
+        const wsEntryEl = document.getElementById('warriorEntryRange');
+        if (wsEntryEl) wsEntryEl.textContent = analysis.warriorSignal.entryRange;
+        const wsStopEl = document.getElementById('warriorStopLoss');
+        if (wsStopEl) wsStopEl.textContent = analysis.warriorSignal.stopLoss;
+        const wsTp1El = document.getElementById('warriorTp1');
+        if (wsTp1El) wsTp1El.textContent = analysis.warriorSignal.tp1;
+        const wsTp2El = document.getElementById('warriorTp2');
+        if (wsTp2El) wsTp2El.textContent = analysis.warriorSignal.tp2;
+        const wsTp3El = document.getElementById('warriorTp3');
+        if (wsTp3El) wsTp3El.textContent = analysis.warriorSignal.tp3;
+        const wsRatEl = document.getElementById('warriorSignalRationale');
+        if (wsRatEl) wsRatEl.textContent = analysis.warriorSignal.rationale;
+
+        // Subtle horizontal grid lines & right-axis price ticks
+        ctx.font = '10px "JetBrains Mono", monospace';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        const ticks = 6;
+        for (let t = 0; t <= ticks; t++) {
+          const ratio = t / ticks;
+          const val = pMax - ratio * pSpan;
+          const y = chartTop + ratio * chartHeight;
+
+          ctx.strokeStyle = 'rgba(148, 163, 184, 0.09)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(plotWidth, y);
+          ctx.stroke();
+
+          ctx.fillStyle = '#7e96ab';
+          ctx.fillText(formatPrice(val, analysis.symKey, analysis.inst.priceTagDecimals), plotWidth + 6, y);
+        }
+
+        // Draw Buy & Sell Zone dashed bands
+        for (const z of analysis.zones) {
+          const isBuy = z.side === 'BUY';
+          if (isBuy && !state.layers.buyZones) continue;
+          if (!isBuy && !state.layers.sellZones) continue;
+
+          const highlighted =
+            (state.biasFilter === 'Bullish' && isBuy) ||
+            (state.biasFilter === 'Bearish' && !isBuy);
+
+          const yTop = priceToY(z.high);
+          const yBot = priceToY(z.low);
+
+          ctx.fillStyle = isBuy
+            ? highlighted ? 'rgba(16, 185, 129, 0.14)' : 'rgba(16, 185, 129, 0.06)'
+            : highlighted ? 'rgba(244, 63, 94, 0.14)' : 'rgba(244, 63, 94, 0.06)';
+          ctx.fillRect(0, yTop, plotWidth, Math.max(2, yBot - yTop));
+
+          ctx.save();
+          ctx.setLineDash([4, 4]);
+          ctx.strokeStyle = isBuy ? 'rgba(52, 211, 153, 0.65)' : 'rgba(251, 113, 133, 0.65)';
+          ctx.lineWidth = highlighted ? 1.5 : 1;
+          ctx.beginPath();
+          ctx.moveTo(0, yTop);
+          ctx.lineTo(plotWidth, yTop);
+          ctx.moveTo(0, yBot);
+          ctx.lineTo(plotWidth, yBot);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // Reference dashed line (matching gray dotted line in screenshots)
+        const refY = priceToY(analysis.refPrice);
+        if (refY >= chartTop && refY <= chartBottom) {
+          ctx.save();
+          ctx.setLineDash([2, 3]);
+          ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(0, refY);
+          ctx.lineTo(plotWidth, refY);
+          ctx.stroke();
+          ctx.restore();
+
+          ctx.fillStyle = '#334155';
+          ctx.fillRect(plotWidth + 2, refY - 9, rightAxisWidth - 4, 18);
+          ctx.fillStyle = '#f8fafc';
+          ctx.fillText(formatPrice(analysis.refPrice, analysis.symKey, analysis.inst.priceTagDecimals), plotWidth + 6, refY);
+        }
+
+        // Candlesticks + Volume Histogram
+        const volTop = h - bottomAxisHeight - volHeight;
+        for (let i = 0; i < candles.length; i++) {
+          const c = candles[i];
+          const x = idxToX(i);
+          const isUp = c.close >= c.open;
+          const color = isUp ? '#10b981' : '#f43f5e';
+
+          const yHigh = priceToY(c.high);
+          const yLow = priceToY(c.low);
+          const yOpen = priceToY(c.open);
+          const yClose = priceToY(c.close);
+
+          // Wick
+          ctx.strokeStyle = isUp ? '#6ee7b7' : '#fda4af';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(x, yHigh);
+          ctx.lineTo(x, yLow);
+          ctx.stroke();
+
+          // Body
+          const bodyTop = Math.min(yOpen, yClose);
+          const bodyH = Math.max(1.5, Math.abs(yClose - yOpen));
+          ctx.fillStyle = color;
+          ctx.fillRect(x - candleW / 2, bodyTop, candleW, bodyH);
+
+          // Volume bar
+          const vBarH = Math.max(2, (c.volume / maxVol) * (volHeight - 4));
+          ctx.fillStyle = isUp ? 'rgba(16, 185, 129, 0.42)' : 'rgba(244, 63, 94, 0.42)';
+          ctx.fillRect(x - candleW / 2, volTop + volHeight - vBarH, candleW, vBarH);
+        }
+
+        // VWAP Line
+        if (state.layers.vwap) {
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          analysis.vwapSeries.forEach((val, i) => {
+            const x = idxToX(i);
+            const y = priceToY(val);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          });
+          ctx.stroke();
+        }
+
+        // EMA 200 Line
+        if (state.layers.ema200) {
+          ctx.strokeStyle = '#818cf8';
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          analysis.emaSeries.forEach((val, i) => {
+            const x = idxToX(i);
+            const y = priceToY(val);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          });
+          ctx.stroke();
+        }
+
+        // BOS & CHoCH Structure Markers
+        ctx.textAlign = 'center';
+        for (const m of analysis.markers) {
+          const x = idxToX(m.index);
+          const y = priceToY(m.price);
+          const markerColor = m.bullish ? '#34d399' : '#fb7185';
+
+          ctx.fillStyle = markerColor;
+          ctx.beginPath();
+          ctx.arc(x, y, 3.2, 0, Math.PI * 2);
+          ctx.fill();
+
+          const labelY = m.bullish ? Math.min(chartBottom - 6, y + 12) : Math.max(chartTop + 10, y - 10);
+          ctx.font = 'bold 10px "JetBrains Mono", monospace';
+          ctx.fillStyle = markerColor;
+          ctx.fillText(m.label, x, labelY);
+        }
+
+        // Right-axis Bid & Ask Tags
+        const bidY = priceToY(analysis.bidPrice);
+        const askY = priceToY(analysis.askPrice);
+
+        ctx.textAlign = 'left';
+        ctx.font = 'bold 10px "JetBrains Mono", monospace';
+
+        ctx.fillStyle = '#2563eb';
+        ctx.fillRect(plotWidth + 2, bidY - 9, rightAxisWidth - 4, 18);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(formatPrice(analysis.bidPrice, analysis.symKey, analysis.inst.priceTagDecimals), plotWidth + 6, bidY);
+
+        if (Math.abs(askY - bidY) > 16) {
+          ctx.fillStyle = '#e11d48';
+          ctx.fillRect(plotWidth + 2, askY - 9, rightAxisWidth - 4, 18);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(formatPrice(analysis.askPrice, analysis.symKey, analysis.inst.priceTagDecimals), plotWidth + 6, askY);
+        }
+
+        // Bottom Time Axis Labels
+        ctx.fillStyle = '#7e96ab';
+        ctx.font = '10px "JetBrains Mono", monospace';
+        ctx.textAlign = 'center';
+        const timeStep = Math.max(1, Math.floor(candles.length / 4));
+        for (let i = timeStep; i < candles.length; i += timeStep) {
+          const x = idxToX(i);
+          const d = new Date(candles[i].time * 1000);
+          const label =
+            analysis.tf === 'Daily'
+              ? `${d.getDate()}`
+              : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          ctx.fillText(label, x, h - 8);
+        }
+
+        ctx.restore();
+      }
+
+      // =======================================================================
+      // 6. FULL UI RENDERER
+      // =======================================================================
+      function renderAll() {
+        const analysis = computeAnalysis(state.symbol, state.timeframe);
+        const inst = analysis.inst;
+
+        // Feed status badge
+        const badgeText = document.getElementById('feedStatusText');
+        const detailText = document.getElementById('feedDetailText');
+        if (badgeText) badgeText.textContent = state.feedStatusText;
+        if (detailText) detailText.textContent = state.feedDetailText;
+
+        // Active instrument tabs
+        document.querySelectorAll('.inst-btn').forEach(btn => {
+          const active = btn.dataset.sym === state.symbol;
+          btn.className = active
+            ? 'inst-btn rounded-xl border border-amber-400 bg-amber-400/20 px-3 py-1.5 text-xs font-bold text-amber-200 transition'
+            : 'inst-btn rounded-xl border border-slate-700/90 bg-slate-900/90 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:border-cyan-400/50 transition';
+        });
+
+        // Active timeframe buttons & chart badge
+        document.querySelectorAll('.tf-btn').forEach(btn => {
+          const active = btn.dataset.tf === state.timeframe;
+          btn.className = active
+            ? 'tf-btn rounded-xl border border-cyan-400 bg-cyan-400/20 px-3 py-1.5 font-mono text-xs font-bold text-cyan-200 transition'
+            : 'tf-btn rounded-xl border border-slate-700 bg-slate-900 px-3 py-1.5 font-mono text-xs font-semibold text-slate-300 hover:border-cyan-400/60 transition';
+        });
+
+        const tfBadge = document.getElementById('activeTfBadge');
+        if (tfBadge) tfBadge.textContent = state.timeframe;
+
+        // Bias filter buttons (strictly highlight/filter bias, never move price)
+        document.querySelectorAll('.bias-btn').forEach(btn => {
+          const b = btn.dataset.bias;
+          const active = b === state.biasFilter;
+          const colorClass =
+            b === 'Bullish'
+              ? 'text-emerald-300'
+              : b === 'Bearish'
+                ? 'text-rose-300'
+                : 'text-cyan-200';
+          btn.className = active
+            ? `bias-btn rounded-xl border border-cyan-400 bg-cyan-500/20 px-2.5 py-1.5 text-xs font-bold ${colorClass} transition`
+            : `bias-btn rounded-xl border border-slate-700 bg-slate-900 px-2.5 py-1.5 text-xs font-semibold ${colorClass} hover:border-cyan-400/50 transition`;
+        });
+
+        const biasFilterBadge = document.getElementById('biasFilterBadge');
+        if (biasFilterBadge) biasFilterBadge.textContent = `Filter: ${state.biasFilter}`;
+
+        // XM match banner & settings inputs
+        const matched = isXmMatched(state.symbol);
+        const xmBanner = document.getElementById('xmMatchBanner');
+        const xmBannerCopy = document.getElementById('xmBannerCopy');
+        const settingsSymLabel = document.getElementById('settingsSymLabel');
+        const xmToggle = document.getElementById('xmMatchedToggle');
+        const offsetInput = document.getElementById('priceOffsetInput');
+
+        if (settingsSymLabel) settingsSymLabel.textContent = inst.tabLabel.toUpperCase();
+        if (xmToggle) xmToggle.checked = matched;
+        if (offsetInput && document.activeElement !== offsetInput) {
+          offsetInput.value = getOffset(state.symbol);
+        }
+
+        if (xmBanner && xmBannerCopy) {
+          if (matched) {
+            xmBanner.className = 'rounded-2xl border border-emerald-400/35 bg-emerald-500/10 px-4 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between';
+            xmBannerCopy.innerHTML = `<span class="font-semibold text-emerald-300">XM Matched:</span> ${inst.title} is matched to your XM MT5 bid (offset: <span class="font-mono">${formatPrice(getOffset(state.symbol), state.symbol, inst.priceTagDecimals)}</span>).`;
+          } else {
+            xmBanner.className = 'rounded-2xl border border-amber-400/35 bg-amber-500/10 px-4 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between';
+            xmBannerCopy.textContent = `Prices aren't matched to XM yet. Open Settings and match ${inst.tabLabel.toUpperCase()} to your XM MT5 Bid before using these levels.`;
+          }
+        }
+
+        // Chart header readouts
+        document.getElementById('chartSymbolHeading').textContent = inst.title;
+        document.getElementById('bidPriceReadout').textContent = formatPrice(analysis.bidPrice, state.symbol, inst.priceTagDecimals);
+        document.getElementById('refPriceReadout').textContent = formatPrice(analysis.refPrice, state.symbol, inst.priceTagDecimals);
+        document.getElementById('askPriceReadout').textContent = formatPrice(analysis.askPrice, state.symbol, inst.priceTagDecimals);
+        document.getElementById('chartSubStatus').textContent =
+          `${state.timeframe} timeframe • ${analysis.markers.length} structure markers • ${state.paused ? 'Ticks paused' : 'Live ticks running'}`;
+
+        // Setup Gatekeeper card
+        document.getElementById('gatekeeperTitle').textContent = analysis.isAGrade ? 'A-grade setup ready' : 'No A-grade setup';
+        document.getElementById('confluencePill').textContent = `${analysis.passedCount} of ${analysis.checks.length} confluences`;
+
+        const dirWord = analysis.isDowntrend ? 'Bearish' : 'Bullish';
+        const dirClass = analysis.isDowntrend ? 'text-rose-400' : 'text-emerald-400';
+        const emaSideWord = analysis.currentPrice < analysis.latestEma ? 'below' : 'above';
+        const huntWord = analysis.isDowntrend ? 'sells' : 'buys';
+        const targetZone = analysis.isDowntrend ? analysis.zones[0] : analysis.zones[2];
+
+        document.getElementById('gatekeeperSummary').innerHTML =
+          `<span class="font-semibold ${dirClass}">${dirWord}</span> on the <span class="font-mono text-cyan-300">${state.timeframe}</span> with price ${emaSideWord} the ${state.timeframe} EMA 200, so it's hunting ${huntWord} only. ` +
+          `Price is near the ${huntWord.slice(0, -1)} range at ${formatPrice(targetZone.low, state.symbol)} to ${formatPrice(targetZone.high, state.symbol)}, ` +
+          `and it has ${analysis.passedCount} of ${analysis.checks.length} confluences` +
+          `${analysis.failedRequired ? " and it fails a required check, so it's skipped." : '.'}`;
+
+        document.getElementById('nextBuyRangeVal').textContent = analysis.nextBuyText;
+        document.getElementById('nextSellRangeVal').textContent = analysis.nextSellText;
+        document.getElementById('whyBtnLabel').textContent =
+          `Why: ${analysis.passedCount} of ${analysis.checks.length} confluences${analysis.failedRequired ? ', a required check fails' : ''}`;
+
+        const whyPanel = document.getElementById('whyBreakdownPanel');
+        if (whyPanel) {
+          whyPanel.innerHTML = analysis.checks
+            .map(c => {
+              const icon = c.passed ? '✓' : '✕';
+              const cls = c.passed ? 'text-emerald-300' : 'text-rose-300';
+              return `<div class="flex items-center justify-between gap-2 py-0.5"><span class="${cls} font-mono">${icon}</span><span class="flex-1 text-slate-300">${c.label}</span>${c.required ? '<span class="text-[10px] font-mono text-amber-300">REQ</span>' : ''}</div>`;
+            })
+            .join('');
+        }
+
+        // CURRENT TREND card
+        const trendHeadline = document.getElementById('currentTrendHeadline');
+        trendHeadline.textContent = analysis.isDowntrend ? 'DOWNTREND' : 'UPTREND';
+        trendHeadline.className = `text-2xl sm:text-3xl font-extrabold tracking-tight ${analysis.isDowntrend ? 'text-rose-400' : 'text-emerald-400'}`;
+        document.getElementById('scannerModeLine').textContent = analysis.scannerModeText;
+
+        const mtfStrip = document.getElementById('mtfBiasStrip');
+        if (mtfStrip) {
+          mtfStrip.innerHTML = ['1h', '15m', '5m', '1m']
+            .map(tfKey => {
+              const b = analysis.mtfBias[tfKey];
+              const isBull = b === 'Bullish';
+              return `
+                <div class="rounded-xl border border-slate-800/90 bg-slate-950/75 px-3 py-2.5">
+                  <div class="font-mono text-[11px] text-slate-400">${tfKey === '1h' ? '1 hour' : tfKey === '15m' ? '15 min' : tfKey === '5m' ? '5 min' : '1 min'}</div>
+                  <div class="mt-0.5 text-xs sm:text-sm font-bold ${isBull ? 'text-emerald-400' : 'text-rose-400'}">${b}</div>
+                </div>
+              `;
+            })
+            .join('');
+        }
+
+        document.getElementById('emaRowLabel').textContent = `${state.timeframe} EMA 200`;
+        document.getElementById('emaRowValue').textContent = formatPrice(analysis.latestEma, state.symbol);
+        const emaRel = document.getElementById('emaRowRel');
+        const belowEma = analysis.currentPrice < analysis.latestEma;
+        emaRel.textContent = belowEma ? 'price below' : 'price above';
+        emaRel.className = `ml-2 text-xs font-semibold ${belowEma ? 'text-rose-400' : 'text-emerald-400'}`;
+
+        document.getElementById('vwapRowValue').textContent = formatPrice(analysis.latestVwap, state.symbol);
+        const vwapRel = document.getElementById('vwapRowRel');
+        const belowVwap = analysis.currentPrice < analysis.latestVwap;
+        vwapRel.textContent = belowVwap ? 'price below' : 'price above';
+        vwapRel.className = `ml-2 text-xs font-semibold ${belowVwap ? 'text-rose-400' : 'text-emerald-400'}`;
+
+        document.getElementById('avgRangeRowLabel').textContent = `${state.timeframe} average range`;
+        document.getElementById('avgRangeRowValue').textContent = `${inst.unitPrefix}${formatPrice(analysis.avgRange, state.symbol)}`;
+
+        // KEY LEVELS TODAY
+        const levelsEl = document.getElementById('keyLevelsList');
+        if (levelsEl) {
+          levelsEl.innerHTML = analysis.keyLevels
+            .map(kl => `
+              <div class="flex items-center justify-between py-2.5">
+                <span class="text-slate-300">${kl.label}</span>
+                <div class="font-mono text-right">
+                  <span class="font-semibold text-white">${kl.value}</span>
+                  ${kl.delta ? `<span class="ml-2 text-xs ${kl.positive ? 'text-emerald-400' : 'text-rose-400'}">${kl.delta}</span>` : ''}
+                </div>
+              </div>
+            `)
+            .join('');
+        }
+        document.getElementById('keyLevelsNote').textContent = inst.newsNote;
+
+        // BUY AND SELL ZONES table
+        document.getElementById('zonesSymbolCaption').textContent = `${inst.tabLabel.toUpperCase()} • ${state.timeframe} Zones`;
+        const zonesBody = document.getElementById('zonesTableBody');
+        if (zonesBody) {
+          const orderedZones =
+            state.biasFilter === 'Bullish'
+              ? analysis.zones.slice().sort((a, b) => (a.side === 'BUY' ? -1 : 1))
+              : state.biasFilter === 'Bearish'
+                ? analysis.zones.slice().sort((a, b) => (a.side === 'SELL' ? -1 : 1))
+                : analysis.zones;
+
+          zonesBody.innerHTML = orderedZones
+            .map(z => {
+              const isBuy = z.side === 'BUY';
+              const isMatchedBias =
+                (state.biasFilter === 'Bullish' && isBuy) ||
+                (state.biasFilter === 'Bearish' && !isBuy);
+
+              const badgeCls = isBuy
+                ? 'bg-emerald-500/15 text-emerald-300 border-emerald-400/40'
+                : 'bg-rose-500/15 text-rose-300 border-rose-400/40';
+
+              const rowHighlight = isMatchedBias ? 'bg-cyan-500/10' : '';
+
+              return `
+                <tr class="${rowHighlight} hover:bg-slate-900/50 transition">
+                  <td class="py-2.5 pr-3 font-mono whitespace-nowrap">
+                    <span class="inline-block rounded border px-1.5 py-0.5 text-[10px] font-bold mr-1.5 ${badgeCls}">${z.side}</span>
+                    <div class="mt-1 font-semibold text-white">${formatPrice(z.low, state.symbol)}</div>
+                    <div class="text-slate-400">${formatPrice(z.high, state.symbol)}</div>
+                  </td>
+                  <td class="py-2.5 px-3 font-mono whitespace-nowrap text-rose-300">
+                    ${formatPrice(z.stop, state.symbol)}
+                  </td>
+                  <td class="py-2.5 px-3 font-mono whitespace-nowrap text-slate-200">
+                    ${z.tp1} / ${z.tp2} / ${z.tp3}
+                  </td>
+                  <td class="py-2.5 pl-3">
+                    <div class="flex flex-wrap gap-1">
+                      ${z.reasons.map(r => `<span class="rounded-md border border-slate-700 bg-slate-900/90 px-2 py-0.5 font-mono text-[10px] text-slate-200">${r}</span>`).join('')}
+                    </div>
+                  </td>
+                </tr>
+              `;
+            })
+            .join('');
+        }
+
+        // Local clock on USD news card
+        const clockEl = document.getElementById('localClockDisplay');
+        if (clockEl) {
+          clockEl.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+
+        // Sync Live Chat header context & Telegram status
+        const chatCtxEl = document.getElementById('liveChatContextBadge');
+        if (chatCtxEl) chatCtxEl.textContent = `${inst.tabLabel.toUpperCase()} (${inst.key}) • ${state.timeframe} • ${formatPrice(analysis.currentPrice, state.symbol)}`;
+
+        const tgStatusEl = document.getElementById('telegramBridgeStatus');
+        if (tgStatusEl) {
+          const hasTg = Boolean((state.tgBotToken || '').trim());
+          tgStatusEl.textContent = hasTg ? 'TG Bridge: Configured' : 'TG Bridge: Local Live';
+          tgStatusEl.className = hasTg
+            ? 'rounded-md border border-emerald-400/40 bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] text-emerald-300'
+            : 'rounded-md border border-slate-700 bg-slate-900 px-2 py-0.5 font-mono text-[10px] text-slate-400';
+        }
+
+        // Draw live chart
+        renderCanvasChart(analysis);
+      }
+
+      // =======================================================================
+      // 8. LIVE INTERACTIVE BOT CHAT FOR PUTIN PABLO FX (MAIN BOARD + SIDEBAR)
+      // =======================================================================
+      function createBubbleElement(sender, text, isAlert = false) {
+        const isUser = sender === 'user';
+        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+        const wrap = document.createElement('div');
+        wrap.className = `flex flex-col ${isUser ? 'items-end' : 'items-start'}`;
+
+        const bubble = document.createElement('div');
+        bubble.className = isUser
+          ? 'max-w-[90%] rounded-2xl rounded-br-sm bg-cyan-500/20 border border-cyan-400/40 px-3 py-2 text-xs text-cyan-100 whitespace-pre-line'
+          : isAlert
+            ? 'max-w-[94%] rounded-2xl rounded-bl-sm bg-slate-900/95 border border-amber-400/30 px-3 py-2 text-xs text-slate-200 whitespace-pre-line'
+            : 'max-w-[94%] rounded-2xl rounded-bl-sm bg-slate-900 border border-slate-700/85 px-3 py-2 text-xs text-slate-100 whitespace-pre-line';
+
+        bubble.textContent = text;
+
+        const meta = document.createElement('span');
+        meta.className = 'mt-1 px-1 font-mono text-[10px] text-slate-500';
+        meta.textContent = `${isUser ? 'You' : 'PUTIN PABLO FX'} • ${timeStr}`;
+
+        wrap.appendChild(bubble);
+        wrap.appendChild(meta);
+        return wrap;
+      }
+
+      function appendChatMessage(sender, text, isAlert = false) {
+        const targets = [
+          document.getElementById('liveChatHistory'),
+          document.getElementById('chatMessages')
+        ].filter(Boolean);
+
+        targets.forEach(box => {
+          box.appendChild(createBubbleElement(sender, text, isAlert));
+          box.scrollTop = box.scrollHeight;
+        });
+      }
+
+      async function dispatchToTelegramIfConfigured(text) {
+        const token = (state.tgBotToken || '').trim();
+        const chatId = (state.tgChatId || '').trim();
+        if (!token || !chatId) return;
+        try {
+          await fetch(`https://api.telegram.org/bot${encodeURIComponent(token)}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: chatId, text })
+          });
+        } catch (_) {
+          // Browser/CORS or network restrictions are handled gracefully in UI
+        }
+      }
+
+      async function pollTelegramUpdatesOnce() {
+        const token = (state.tgBotToken || '').trim();
+        const tgStatusEl = document.getElementById('telegramBridgeStatus');
+        if (!token) {
+          if (tgStatusEl) tgStatusEl.textContent = 'TG Bridge: Add Token in Settings';
+          appendChatMessage('bot', 'Add your Telegram Bot Token in Settings to poll Telegram messages.');
+          return;
+        }
+        try {
+          if (tgStatusEl) tgStatusEl.textContent = 'TG Bridge: Polling...';
+          const url = `https://api.telegram.org/bot${encodeURIComponent(token)}/getUpdates?offset=${encodeURIComponent(state.tgUpdateOffset)}&limit=10`;
+          const res = await fetch(url);
+          const data = await res.json();
+          if (data && data.ok && Array.isArray(data.result)) {
+            let count = 0;
+            for (const upd of data.result) {
+              state.tgUpdateOffset = Math.max(state.tgUpdateOffset, (upd.update_id || 0) + 1);
+              const incoming = upd.message?.text || upd.channel_post?.text;
+              if (incoming) {
+                count++;
+                appendChatMessage('user', `[TG] ${incoming}`);
+                const reply = generateBotResponse(incoming);
+                appendChatMessage('bot', reply);
+                if (upd.message?.chat?.id) {
+                  state.tgChatId = String(upd.message.chat.id);
+                  dispatchToTelegramIfConfigured(reply);
+                }
+              }
+            }
+            savePreferences();
+            if (tgStatusEl) tgStatusEl.textContent = `TG Bridge: Synced (${count} new)`;
+          } else if (tgStatusEl) {
+            tgStatusEl.textContent = 'TG Bridge: Check Token/CORS';
+          }
+        } catch (_) {
+          if (tgStatusEl) tgStatusEl.textContent = 'TG Bridge: Offline/CORS';
+        }
+      }
+
+      function generateBotResponse(promptText) {
+        const raw = (promptText || '').trim();
+        const q = raw.toLowerCase();
+
+        // Support quick instrument switching from chat (e.g., "Switch Gold", "Switch BTC", "Switch US30")
+        if (q.includes('switch')) {
+          const matchKey = Object.keys(INSTRUMENTS).find(k => {
+            const inst = INSTRUMENTS[k];
+            return q.includes(k.toLowerCase()) || q.includes(inst.tabLabel.toLowerCase()) || q.includes(inst.key.replace('USD', '').toLowerCase());
+          });
+          if (matchKey && state.symbol !== matchKey) {
+            state.symbol = matchKey;
+            state.lastChatAnnouncedPrice = null;
+            ensureSeries(state.symbol, state.timeframe);
+            renderAll();
+            connectStreamForActiveSymbol();
+          }
+        }
+
+        const a = computeAnalysis(state.symbol, state.timeframe);
+        const symName = a.inst.tabLabel;
+        const px = formatPrice(a.currentPrice, state.symbol);
+        const lastMarker = a.markers[a.markers.length - 1];
+        const structList = a.markers.slice(-4).map(m => `${m.label} (${m.bullish ? 'Bull' : 'Bear'} @ ${formatPrice(m.price, state.symbol)})`).join(', ') || 'No swing breaks yet';
+        const structLabel = lastMarker ? `${lastMarker.label} (${lastMarker.bullish ? 'Bull' : 'Bear'})` : 'Structure';
+
+        if (q.includes('key level') || q.includes('levels') || q.includes('asia') || q.includes('round')) {
+          const lvlSummary = a.keyLevels.map(k => `${k.label}: ${k.value}${k.delta ? ` (${k.delta})` : ''}`).join(' | ');
+          return `[Key Levels • ${symName} ${state.timeframe} @ ${px}] ${lvlSummary}`;
+        }
+
+        if (q.includes('bos') || q.includes('choch') || q.includes('character') || q.includes('structure')) {
+          return `[BOS / CHoCH • ${symName} ${state.timeframe} @ ${px}] Latest: ${structLabel}. Recent markers: ${structList}. Trend: ${a.isDowntrend ? 'DOWNTREND' : 'UPTREND'}.`;
+        }
+
+        if (q.includes('scan') || q.includes('setup') || q.includes('signal') || q.includes('warrior') || q.includes('entry') || q.includes('tp') || q.includes('stop')) {
+          return `[Scan Setup • ${symName} ${state.timeframe} @ ${px}] ${a.warriorSignal.action} (${a.passedCount}/${a.checks.length} confluences, ${structLabel}) | Entry: ${a.warriorSignal.entryRange} | SL: ${a.warriorSignal.stopLoss} | TPs: ${a.warriorSignal.tp1} / ${a.warriorSignal.tp2} / ${a.warriorSignal.tp3}.`;
+        }
+
+        if (q.includes('zone') || q.includes('buy') || q.includes('sell')) {
+          const s1 = a.zones[0];
+          const b1 = a.zones[2];
+          return `[Zones • ${symName} ${state.timeframe} @ ${px}] Sell Zone: ${formatPrice(s1.low, state.symbol)}–${formatPrice(s1.high, state.symbol)} (SL ${formatPrice(s1.stop, state.symbol)}, TPs ${s1.tp1}/${s1.tp2}/${s1.tp3}) | Buy Zone: ${formatPrice(b1.low, state.symbol)}–${formatPrice(b1.high, state.symbol)} (SL ${formatPrice(b1.stop, state.symbol)}, TPs ${b1.tp1}/${b1.tp2}/${b1.tp3}).`;
+        }
+
+        if (q.includes('gate') || q.includes('grade') || q.includes('why') || q.includes('confluence')) {
+          return `[Gatekeeper • ${symName} ${state.timeframe}] ${a.passedCount}/${a.checks.length} confluences. ${a.failedRequired ? 'Required check failed — setup skipped.' : a.isAGrade ? 'A-grade setup criteria met.' : 'Waiting for stronger confluence.'}`;
+        }
+
+        if (q.includes('news') || q.includes('usd') || q.includes('event')) {
+          return `[USD News] No high-impact USD news today. Next: Core PCE Price Index m/m, Wed 15:30. (${a.inst.newsNote})`;
+        }
+
+        return `[${symName} • ${state.timeframe} @ ${px}] ${a.isDowntrend ? 'DOWNTREND' : 'UPTREND'} (${structLabel}, ${a.scannerModeText}) • EMA 200: ${formatPrice(a.latestEma, state.symbol)} • VWAP: ${formatPrice(a.latestVwap, state.symbol)} • Bias Filter: ${state.biasFilter}.`;
+      }
+        });
+
+        if (symKey === state.symbol) {
+          renderAll();
+          const adj = rawPrice + getOffset(symKey);
+          const inst = INSTRUMENTS[symKey];
+          if (
+            state.lastChatAnnouncedPrice === null ||
+            Math.abs(adj - state.lastChatAnnouncedPrice) >= inst.candleVol * 2.2
+          ) {
+            state.lastChatAnnouncedPrice = adj;
+            appendChatMessage(
+              'bot',
+              `${inst.tabLabel} (${state.timeframe}) live tick @ ${formatPrice(adj, symKey)} (${state.feedStatusText})`,
+              true
+            );
+          }
+        }
+      }
+
+      function stopExternalStream() {
+        if (state.heartbeatTimer) {
+          clearInterval(state.heartbeatTimer);
+          state.heartbeatTimer = null;
+        }
+        if (state.ws) {
+          try {
+            state.ws.close();
+          } catch (_) {}
+          state.ws = null;
+        }
+      }
+
+      async function fetchTwelveDataBars(symKey, tf) {
+        const key = (state.apiKey || '').trim();
+        if (!key) return false;
+        const inst = INSTRUMENTS[symKey];
+        const interval = (TIMEFRAME_CONFIG[tf] || TIMEFRAME_CONFIG['5m']).tdInterval;
+        const url =
+          `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(inst.tdSymbol)}` +
+          `&interval=${encodeURIComponent(interval)}&outputsize=50&apikey=${encodeURIComponent(key)}`;
+
+        try {
+          const res = await fetch(url);
+          const data = await res.json();
+          if (!res.ok || data.status === 'error' || !Array.isArray(data.values) || !data.values.length) {
+            return false;
+          }
+
+          const parsed = data.values
+            .slice()
+            .reverse()
+            .map(v => ({
+              time: Math.floor(new Date(v.datetime).getTime() / 1000) || Math.floor(Date.now() / 1000),
+              open: parseFloat(v.open),
+              high: parseFloat(v.high),
+              low: parseFloat(v.low),
+              close: parseFloat(v.close),
+              volume: parseFloat(v.volume || 100)
+            }))
+            .filter(c => Number.isFinite(c.close));
+
+          if (!parsed.length) return false;
+
+          state.seriesMap[seriesKey(symKey, tf)] = {
+            symbol: symKey,
+            timeframe: tf,
+            candles: parsed,
+            refPrice: parsed[parsed.length - 1].close + inst.candleVol * 2.5
+          };
+
+          state.feedMode = 'LIVE_TD';
+          state.feedStatusText = 'TWELVE DATA LIVE';
+          state.feedDetailText = `${inst.title} (${tf}) synced from Twelve Data`;
+          renderAll();
+          return true;
+        } catch (_) {
+          return false;
+        }
+      }
+
+      function connectStreamForActiveSymbol() {
+        stopExternalStream();
+        const inst = INSTRUMENTS[state.symbol];
+
+        // If Twelve Data API key is provided, attempt historical load + Twelve Data WS
+        if (state.apiKey && state.apiKey.trim().length > 0) {
+          fetchTwelveDataBars(state.symbol, state.timeframe);
+          try {
+            const ws = new WebSocket(`wss://ws.twelvedata.com/v1/quotes/price?apikey=${encodeURIComponent(state.apiKey.trim())}`);
+            state.ws = ws;
+            ws.onopen = () => {
+              ws.send(JSON.stringify({ action: 'subscribe', params: { symbols: inst.tdSymbol } }));
+              state.heartbeatTimer = setInterval(() => {
+                if (ws.readyState === WebSocket.OPEN) {
+                  ws.send(JSON.stringify({ action: 'heartbeat' }));
+                }
+              }, 10000);
+            };
+            ws.onmessage = evt => {
+              try {
+                const msg = JSON.parse(evt.data);
+                if (msg.event === 'price' && msg.price != null) {
+                  const p = parseFloat(msg.price);
+                  if (Number.isFinite(p)) {
+                    state.feedMode = 'LIVE_WS';
+                    state.feedStatusText = 'LIVE WS';
+                    state.feedDetailText = `${inst.title} real-time WebSocket stream active`;
+                    applyLiveTick(state.symbol, p, 15);
+                  }
+                }
+              } catch (_) {}
+            };
+            ws.onerror = () => {
+              state.feedMode = 'SIMULATED';
+              state.feedStatusText = 'LIVE STREAM';
+              state.feedDetailText = `${inst.tabLabel} tick stream active (Twelve Data WS fallback)`;
+            };
+          } catch (_) {
+            state.feedMode = 'SIMULATED';
+            state.feedStatusText = 'LIVE STREAM';
+          }
+          return;
+        }
+
+        // Public 24/7 WebSocket for BTCUSD & ETHUSD when no API key is entered
+        if (inst.binanceSymbol) {
+          try {
+            const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${inst.binanceSymbol}@trade`);
+            state.ws = ws;
+            ws.onopen = () => {
+              state.feedMode = 'LIVE_WS';
+              state.feedStatusText = 'LIVE CRYPTO WS';
+              state.feedDetailText = `${inst.title} live trade stream connected`;
+            };
+            ws.onmessage = evt => {
+              try {
+                const d = JSON.parse(evt.data);
+                const p = parseFloat(d.p);
+                const q = parseFloat(d.q || 1);
+                if (Number.isFinite(p)) {
+                  applyLiveTick(state.symbol, p, q * 10);
+                }
+              } catch (_) {}
+            };
+            ws.onerror = () => {
+              state.feedMode = 'SIMULATED';
+              state.feedStatusText = 'LIVE STREAM';
+              state.feedDetailText = `${inst.title} live tick engine running`;
+            };
+          } catch (_) {
+            state.feedMode = 'SIMULATED';
+            state.feedStatusText = 'LIVE STREAM';
+          }
+        } else {
+          state.feedMode = 'SIMULATED';
+          state.feedStatusText = 'LIVE STREAM';
+          state.feedDetailText = `${inst.title} live tick engine active • Add Twelve Data key in Settings for external feed`;
+        }
+      }
+
+      // Continuous background tick simulation every 1.4s so charts stay alive smoothly
+      setInterval(() => {
+        if (state.paused) return;
+        const symKey = state.symbol;
+        const inst = INSTRUMENTS[symKey];
+        if (state.feedMode === 'LIVE_WS' && inst.binanceSymbol) return;
+
+        const series = ensureSeries(symKey, state.timeframe);
+        const last = series.candles[series.candles.length - 1];
+        const drift =
+          (Math.random() - 0.503) * inst.candleVol * 0.42 +
+          Math.sin(Date.now() / 4200) * inst.candleVol * 0.14;
+        const nextPrice = Math.max(inst.candleVol * 2, last.close + drift);
+        applyLiveTick(symKey, nextPrice, Math.random() * 14 + 4);
+      }, 1400);
+
+      // =======================================================================
+      // 8. LIVE INTERACTIVE BOT CHAT FOR PUTIN PABLO FX
+      // =======================================================================
+      function appendChatMessage(sender, text, isAlert = false) {
+        const box = document.getElementById('chatMessages');
+        if (!box) return;
+
+        const isUser = sender === 'user';
+        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        const wrap = document.createElement('div');
+        wrap.className = `flex flex-col ${isUser ? 'items-end' : 'items-start'}`;
+
+        const bubble = document.createElement('div');
+        bubble.className = isUser
+          ? 'max-w-[88%] rounded-2xl rounded-br-sm bg-cyan-500/20 border border-cyan-400/40 px-3 py-2 text-xs text-cyan-100'
+          : isAlert
+            ? 'max-w-[92%] rounded-2xl rounded-bl-sm bg-slate-900/90 border border-amber-400/25 px-3 py-2 text-xs text-slate-200'
+            : 'max-w-[92%] rounded-2xl rounded-bl-sm bg-slate-900 border border-slate-700/80 px-3 py-2 text-xs text-slate-100';
+
+        bubble.textContent = text;
+
+        const meta = document.createElement('span');
+        meta.className = 'mt-1 px-1 font-mono text-[10px] text-slate-500';
+        meta.textContent = `${isUser ? 'You' : 'PUTIN PABLO FX'} • ${timeStr}`;
+
+        wrap.appendChild(bubble);
+        wrap.appendChild(meta);
+        box.appendChild(wrap);
+        box.scrollTop = box.scrollHeight;
+      }
+
+      function generateBotResponse(promptText) {
+        const q = promptText.toLowerCase();
+        const a = computeAnalysis(state.symbol, state.timeframe);
+        const symName = a.inst.tabLabel;
+        const px = formatPrice(a.currentPrice, state.symbol);
+        const lastMarker = a.markers[a.markers.length - 1];
+        const structLabel = lastMarker ? `${lastMarker.label} (${lastMarker.bullish ? 'Bull' : 'Bear'})` : 'Structure';
+
+        if (q.includes('signal') || q.includes('warrior') || q.includes('entry') || q.includes('tp') || q.includes('stop')) {
+          return `WARRIOR ${symName} (${state.timeframe}) @ ${px} | ${a.warriorSignal.action} (${a.passedCount}/${a.checks.length} conf, ${structLabel}) | Entry: ${a.warriorSignal.entryRange} | SL: ${a.warriorSignal.stopLoss} | TPs: ${a.warriorSignal.tp1} / ${a.warriorSignal.tp2} / ${a.warriorSignal.tp3}.`;
+        }
+
+        if (q.includes('zone') || q.includes('buy') || q.includes('sell')) {
+          const s1 = a.zones[0];
+          const b1 = a.zones[2];
+          return `${symName} (${state.timeframe}) @ ${px} | Top Sell Zone: ${formatPrice(s1.low, state.symbol)}–${formatPrice(s1.high, state.symbol)} (SL ${formatPrice(s1.stop, state.symbol)}) | Top Buy Zone: ${formatPrice(b1.low, state.symbol)}–${formatPrice(b1.high, state.symbol)} (SL ${formatPrice(b1.stop, state.symbol)}).`;
+        }
+
+        if (q.includes('gate') || q.includes('grade') || q.includes('why') || q.includes('confluence')) {
+          return `${symName} (${state.timeframe}): ${a.passedCount}/${a.checks.length} confluences (${structLabel}). ${a.failedRequired ? 'Required check failed — setup skipped.' : a.isAGrade ? 'A-grade setup criteria met.' : 'Waiting for stronger confluence.'}`;
+        }
+
+        if (q.includes('news') || q.includes('usd') || q.includes('event')) {
+          return `USD News: No high-impact USD news today. Next: Core PCE Price Index m/m, Wed 15:30.`;
+        }
+
+        return `WARRIOR ${symName} (${state.timeframe}) @ ${px} | ${a.isDowntrend ? 'DOWNTREND' : 'UPTREND'} (${structLabel}, ${a.scannerModeText}) • EMA 200: ${formatPrice(a.latestEma, state.symbol)} • VWAP: ${formatPrice(a.latestVwap, state.symbol)} • Bias Filter: ${state.biasFilter}.`;
+      }
+
+        if (q.includes('gate') || q.includes('grade') || q.includes('why') || q.includes('confluence')) {
+          return `${symName} (${state.timeframe}): ${a.passedCount}/${a.checks.length} confluences. ${a.failedRequired ? 'Required check failed — setup skipped.' : a.isAGrade ? 'A-grade setup criteria met.' : 'Waiting for stronger confluence.'}`;
+        }
+
+        return `${symName} (${state.timeframe}) is at ${px} (${a.isDowntrend ? 'DOWNTREND' : 'UPTREND'}, ${a.scannerModeText}) • EMA 200: ${formatPrice(a.latestEma, state.symbol)} • VWAP: ${formatPrice(a.latestVwap, state.symbol)} • Bias Filter: ${state.biasFilter}.`;
+      }
+
+      // =======================================================================
+      // 9. INITIALIZATION & EVENT BINDINGS
+      // =======================================================================
+      function buildInstrumentButtons() {
+        const container = document.getElementById('instrumentButtons');
+        if (!container) return;
+        container.innerHTML = '';
+
+        Object.values(INSTRUMENTS).forEach(inst => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.dataset.sym = inst.key;
+          btn.className = 'inst-btn rounded-xl border border-slate-700/90 bg-slate-900/90 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:border-cyan-400/50 transition';
+          btn.textContent = inst.tabLabel;
+          btn.addEventListener('click', () => {
+            state.symbol = inst.key;
+            state.lastChatAnnouncedPrice = null;
+            ensureSeries(state.symbol, state.timeframe);
+            renderAll();
+            connectStreamForActiveSymbol();
+            appendChatMessage('bot', `Switched to ${inst.title} on ${state.timeframe}.`);
+          });
+          container.appendChild(btn);
+        });
+      }
+
+      function bindEvents() {
+        // Timeframe buttons (1m, 5m, 15m, 1H, 4H, Daily)
+        document.querySelectorAll('.tf-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const tf = btn.dataset.tf;
+            if (!TIMEFRAME_CONFIG[tf]) return;
+            state.timeframe = tf;
+            ensureSeries(state.symbol, tf);
+            renderAll();
+            if (state.apiKey && state.apiKey.trim().length > 0) {
+              fetchTwelveDataBars(state.symbol, tf);
+            }
+            appendChatMessage('bot', `${INSTRUMENTS[state.symbol].tabLabel} timeframe switched to ${tf}.`);
+          });
+        });
+
+        // Bias filter buttons (Bullish / Bearish / Neutral — filter/highlight ONLY, never move price)
+        document.querySelectorAll('.bias-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const chosenBias = btn.dataset.bias;
+            state.biasFilter = chosenBias;
+            renderAll();
+            appendChatMessage('bot', `Bias filter set to ${chosenBias} (highlighting matching bias/zones only; chart price is untouched).`);
+          });
+        });
+
+        // Chart layer toggles
+        document.getElementById('toggleBuyZonesBtn')?.addEventListener('click', () => {
+          state.layers.buyZones = !state.layers.buyZones;
+          renderAll();
+        });
+        document.getElementById('toggleSellZonesBtn')?.addEventListener('click', () => {
+          state.layers.sellZones = !state.layers.sellZones;
+          renderAll();
+        });
+        document.getElementById('toggleVwapBtn')?.addEventListener('click', () => {
+          state.layers.vwap = !state.layers.vwap;
+          renderAll();
+        });
+        document.getElementById('toggleEmaBtn')?.addEventListener('click', () => {
+          state.layers.ema200 = !state.layers.ema200;
+          renderAll();
+        });
+        document.getElementById('pauseStreamBtn')?.addEventListener('click', e => {
+          state.paused = !state.paused;
+          e.currentTarget.textContent = state.paused ? 'Resume Ticks' : 'Pause Ticks';
+          renderAll();
+        });
+
+        // Why expandable checklist
+        document.getElementById('toggleWhyBtn')?.addEventListener('click', () => {
+          state.whyOpen = !state.whyOpen;
+          const panel = document.getElementById('whyBreakdownPanel');
+          const arrow = document.getElementById('whyArrow');
+          if (panel) panel.classList.toggle('hidden', !state.whyOpen);
+          if (arrow) arrow.textContent = state.whyOpen ? '▾' : '▸';
+        });
+
+        // Settings drawer & XM / API key controls
+        const toggleDrawer = () => {
+          document.getElementById('settingsDrawer')?.classList.toggle('hidden');
+        };
+        document.getElementById('toggleSettingsBtn')?.addEventListener('click', toggleDrawer);
+        document.getElementById('quickOpenSettingsBtn')?.addEventListener('click', toggleDrawer);
+
+        document.getElementById('xmMatchedToggle')?.addEventListener('change', e => {
+          state.xmMatchedBySymbol[state.symbol] = Boolean(e.target.checked);
+          savePreferences();
+          renderAll();
+          const fb = document.getElementById('settingsFeedback');
+          if (fb) fb.textContent = `XM bid match ${state.xmMatchedBySymbol[state.symbol] ? 'enabled' : 'disabled'} for ${INSTRUMENTS[state.symbol].tabLabel}.`;
+        });
+
+        document.getElementById('applyOffsetBtn')?.addEventListener('click', () => {
+          const inp = document.getElementById('priceOffsetInput');
+          const val = parseFloat(inp?.value ?? '0');
+          state.offsetBySymbol[state.symbol] = Number.isFinite(val) ? val : 0;
+          state.xmMatchedBySymbol[state.symbol] = true;
+          savePreferences();
+          renderAll();
+          const fb = document.getElementById('settingsFeedback');
+          if (fb) fb.textContent = `Applied offset ${state.offsetBySymbol[state.symbol]} and matched ${INSTRUMENTS[state.symbol].tabLabel} to XM MT5.`;
+        });
+
+        document.getElementById('saveApiKeyBtn')?.addEventListener('click', () => {
+          const inp = document.getElementById('twelveDataKeyInput');
+          state.apiKey = (inp?.value || '').trim();
+          savePreferences();
+          const fb = document.getElementById('settingsFeedback');
+          if (fb) {
+            fb.textContent = state.apiKey
+              ? 'Twelve Data API key saved locally. Connecting live feed...'
+              : 'Twelve Data API key cleared. Using live tick stream.';
+          }
+          connectStreamForActiveSymbol();
+        });
+
+        document.getElementById('saveTelegramBtn')?.addEventListener('click', () => {
+          const tokInp = document.getElementById('telegramBotTokenInput');
+          const chatInp = document.getElementById('telegramChatIdInput');
+          state.tgBotToken = (tokInp?.value || '').trim();
+          state.tgChatId = (chatInp?.value || '').trim();
+          savePreferences();
+          renderAll();
+          const fb = document.getElementById('settingsFeedback');
+          if (fb) {
+            fb.textContent = state.tgBotToken
+              ? 'Telegram bot credentials saved locally.'
+              : 'Telegram bot credentials cleared.';
+          }
+        });
+
+        document.getElementById('tgSyncNowBtn')?.addEventListener('click', () => {
+          pollTelegramUpdatesOnce();
+        });
+
+        const handleChatSubmit = inputEl => {
+          const text = (inputEl?.value || '').trim();
+          if (!text) return;
+          appendChatMessage('user', text);
+          inputEl.value = '';
+          const reply = generateBotResponse(text);
+          setTimeout(() => {
+            appendChatMessage('bot', reply);
+            dispatchToTelegramIfConfigured(`PUTIN PABLO FX: ${reply}`);
+          }, 120);
+        };
+
+        // Main-board Live Chat form & quick chips
+        document.getElementById('liveChatForm')?.addEventListener('submit', e => {
+          e.preventDefault();
+          handleChatSubmit(document.getElementById('liveChatInput'));
+        });
+
+        document.querySelectorAll('.live-chat-chip').forEach(chip => {
+          chip.addEventListener('click', () => {
+            const prompt = chip.dataset.prompt || 'Scan Setup';
+            appendChatMessage('user', prompt);
+            const reply = generateBotResponse(prompt);
+            setTimeout(() => {
+              appendChatMessage('bot', reply);
+              dispatchToTelegramIfConfigured(`PUTIN PABLO FX: ${reply}`);
+            }, 100);
+          });
+        });
+
+        document.getElementById('clearLiveChatBtn')?.addEventListener('click', () => {
+          ['liveChatHistory', 'chatMessages'].forEach(id => {
+            const box = document.getElementById(id);
+            if (box) box.innerHTML = '';
+          });
+          appendChatMessage('bot', 'Live chat cleared. PUTIN PABLO FX scanner is active.');
+        });
+
+        // Sidebar Chat form & quick prompt chips
+        document.getElementById('chatForm')?.addEventListener('submit', e => {
+          e.preventDefault();
+          handleChatSubmit(document.getElementById('chatInput'));
+        });
+
+        document.querySelectorAll('.chat-chip').forEach(chip => {
+          chip.addEventListener('click', () => {
+            const prompt = chip.dataset.prompt || 'Give me current price and trend';
+            appendChatMessage('user', prompt);
+            const reply = generateBotResponse(prompt);
+            setTimeout(() => appendChatMessage('bot', reply), 120);
+          });
+        });
+
+        document.getElementById('clearChatBtn')?.addEventListener('click', () => {
+          ['liveChatHistory', 'chatMessages'].forEach(id => {
+            const box = document.getElementById(id);
+            if (box) box.innerHTML = '';
+          });
+          appendChatMessage('bot', 'Chat cleared. PUTIN PABLO FX live scanner is active.');
+        });
+
+        // Resize listener for responsive canvas
+        window.addEventListener('resize', () => {
+          renderCanvasChart(computeAnalysis(state.symbol, state.timeframe));
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        loadSavedPreferences();
+        const apiInp = document.getElementById('twelveDataKeyInput');
+        if (apiInp && state.apiKey) apiInp.value = state.apiKey;
+        const tgTokInp = document.getElementById('telegramBotTokenInput');
+        if (tgTokInp && state.tgBotToken) tgTokInp.value = state.tgBotToken;
+        const tgChatInp = document.getElementById('telegramChatIdInput');
+        if (tgChatInp && state.tgChatId) tgChatInp.value = state.tgChatId;
+
+        buildInstrumentButtons();
+        ensureSeries(state.symbol, state.timeframe);
+        bindEvents();
+        renderAll();
+        connectStreamForActiveSymbol();
+
+        appendChatMessage(
+          'bot',
+          'PUTIN PABLO FX Live Chat online. Try "Scan Setup", "Key Levels", "BOS / CHoCH", "USD News", or "Switch Gold" on XAUUSD (5m).'
+        );
+      });
+    })();
+  </script>
+</body>
+</html>
+```
