@@ -1,0 +1,1596 @@
+```html
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PUTIN PABLO FX — XAUUSD Scalper &amp; Zone Scanner</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            cyber: {
+              bg: '#060e14',
+              panel: '#0b1821',
+              card: '#0e1f2b',
+              border: '#173242',
+              cyan: '#18d4e8',
+              cyanDim: '#0f8c9c',
+              bull: '#10d998',
+              bear: '#f43f5e',
+              muted: '#7b98aa',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #060e14;
+      color: #e6f2f8;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+    .cyber-panel {
+      background: linear-gradient(180deg, rgba(14, 31, 43, 0.92) 0%, rgba(9, 21, 29, 0.96) 100%);
+      border: 1px solid #173242;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(24, 212, 232, 0.08);
+      position: relative;
+    }
+    /* HUD corner brackets matching screenshots */
+    .hud-bracket::before, .hud-bracket::after {
+      content: '';
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-color: #18d4e8;
+      pointer-events: none;
+      opacity: 0.75;
+    }
+    .hud-bracket::before {
+      top: -1px;
+      left: -1px;
+      border-top: 2px solid #18d4e8;
+      border-left: 2px solid #18d4e8;
+      border-top-left-radius: 0.75rem;
+    }
+    .hud-bracket::after {
+      bottom: -1px;
+      right: -1px;
+      border-bottom: 2px solid #18d4e8;
+      border-right: 2px solid #18d4e8;
+      border-bottom-right-radius: 0.75rem;
+    }
+    .glow-text {
+      text-shadow: 0 0 16px rgba(24, 212, 232, 0.55);
+    }
+    .glow-cyan {
+      box-shadow: 0 0 14px rgba(24, 212, 232, 0.28);
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #060e14;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1a3a4d;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #18d4e8;
+    }
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.25); }
+    }
+    .live-dot {
+      animation: pulseDot 1.6s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="min-h-screen pb-24 lg:pb-10 selection:bg-cyan-500/30 selection:text-cyan-200">
+
+  <!-- Toast / Status Notification Banner (replaces alert) -->
+  <div id="toastBanner" class="fixed top-4 right-4 z-50 hidden max-w-sm rounded-xl border border-cyan-500/40 bg-[#0b1b26]/95 px-4 py-3 text-sm text-cyan-100 shadow-2xl backdrop-blur-md transition-all">
+    <div class="flex items-start gap-2.5">
+      <span class="mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full bg-cyan-400"></span>
+      <div id="toastMessage" class="leading-snug">Notification</div>
+    </div>
+  </div>
+
+  <!-- Top Cyber Banner -->
+  <header class="relative overflow-hidden border-b border-[#173242] bg-gradient-to-b from-[#0b2230] via-[#081620] to-[#060e14]">
+    <div class="pointer-events-none absolute inset-0 opacity-20" style="background-image: radial-gradient(circle at 50% 0%, #18d4e8 0%, transparent 65%);"></div>
+    <div class="mx-auto max-w-7xl px-4 py-5 sm:px-6">
+      <!-- Brand Title Bar -->
+      <div class="flex flex-col items-center justify-center text-center mb-5">
+        <div class="inline-flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-950/40 px-3 py-1 text-[11px] font-mono uppercase tracking-widest text-cyan-300 mb-2">
+          <span class="h-2 w-2 rounded-full bg-emerald-400 live-dot"></span>
+          <span>Algorithmic Structure &amp; Liquidity Engine</span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-[0.22em] text-white glow-text">
+          PUTIN PABLO FX
+        </h1>
+      </div>
+
+      <!-- Asset Header & Live Price Row -->
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between rounded-2xl border border-[#173242] bg-[#09151e]/90 p-4 sm:p-5">
+        <div class="flex items-center gap-3.5">
+          <!-- Cyber Mask SVG Emblem -->
+          <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-cyan-400/50 bg-[#07131b] shadow-[0_0_20px_rgba(24,212,232,0.2)]">
+            <svg class="h-9 w-9 text-cyan-400" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 24C14 14 22 8 32 8C42 8 50 14 50 24V36C50 47 41 56 32 56C23 56 14 47 14 36V24Z" />
+              <path d="M20 24L27 30M27 24L20 30" />
+              <path d="M37 24L44 30M44 24L37 30" />
+              <path d="M21 41C25 46 39 46 43 41" />
+              <path d="M25 42V45M29 43V46M35 43V46M39 42V45" />
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-2.5">
+              <h2 class="text-xl sm:text-2xl font-bold tracking-wider text-white">XAUUSD</h2>
+              <span id="sessionBadge" class="rounded-md border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 font-mono text-xs text-cyan-300">LIVE STREAM</span>
+            </div>
+            <p class="text-xs sm:text-sm text-cyan-300/90 mt-0.5">Scalper, zone entries with 3 targets</p>
+            <div class="mt-2 flex flex-wrap items-baseline gap-2.5">
+              <span id="livePriceDisplay" class="font-mono text-2xl sm:text-3xl font-bold tracking-tight text-white">4,160.83</span>
+              <span id="dailyChangeDisplay" class="font-mono text-xs sm:text-sm font-semibold text-rose-400">-1.87 (-0.04%) today</span>
+            </div>
+            <div class="mt-1 flex items-center gap-2 text-xs text-slate-400">
+              <span id="livePulseDot" class="h-2 w-2 rounded-full bg-emerald-400 live-dot"></span>
+              <span id="lastUpdatedText" class="font-mono text-emerald-300/90">Live, updated 0s ago</span>
+              <span>•</span>
+              <span id="brokerFeedStatus" class="text-slate-400">XM MT5 Offset: <strong id="offsetBadge" class="font-mono text-cyan-300">+$0.00</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap items-center gap-2.5">
+          <button id="toggleAlertsBtn" class="flex-1 sm:flex-none rounded-xl border border-[#22475e] bg-[#0e202c] px-4 py-3 text-xs sm:text-sm font-semibold text-slate-100 transition hover:border-cyan-400 hover:text-cyan-300 active:scale-[0.99]">
+            Turn on alerts
+          </button>
+          <button id="openSettingsBtn" class="flex-1 sm:flex-none rounded-xl border border-[#22475e] bg-[#0e202c] px-4 py-3 text-xs sm:text-sm font-semibold text-slate-100 transition hover:border-cyan-400 hover:text-cyan-300 active:scale-[0.99]">
+            Settings
+          </button>
+          <button id="toggleSimStreamBtn" class="w-full sm:w-auto rounded-xl border border-cyan-500/50 bg-cyan-500/15 px-4 py-3 text-xs sm:text-sm font-semibold text-cyan-300 transition hover:bg-cyan-500/25 active:scale-[0.99]">
+            Pause Live Feed
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace Grid -->
+  <main class="mx-auto max-w-7xl px-4 pt-5 sm:px-6">
+    <!-- Broker Calibration Notice -->
+    <div id="brokerWarningBanner" class="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-[#1a394c] bg-[#0b1923] px-4 py-3 text-xs sm:text-sm text-slate-300">
+      <p>
+        Prices aren't matched to XM yet. Open <button id="inlineSettingsTrigger" class="font-semibold text-cyan-400 underline underline-offset-2 hover:text-cyan-300">Settings</button> and match <span class="font-mono text-white">GOLD</span> to your XM MT5 Bid before using these levels.
+      </p>
+      <button id="dismissBrokerBanner" class="self-end sm:self-center text-xs text-slate-400 hover:text-white px-2 py-1 rounded-lg border border-slate-700/60">Dismiss</button>
+    </div>
+
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-12">
+      <!-- LEFT / CENTER COLUMN (8 cols on desktop): Setup Gatekeeper, Live Chart, Indicators, Levels, Zones -->
+      <div class="space-y-5 lg:col-span-8">
+
+        <!-- 1. Setup Status & Confluence Gatekeeper Card -->
+        <section class="cyber-panel hud-bracket rounded-2xl p-4 sm:p-5">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <h3 id="setupHeadline" class="text-xl sm:text-2xl font-bold text-white tracking-tight">No A-grade setup</h3>
+            <span id="setupGradeBadge" class="rounded-lg border border-rose-500/40 bg-rose-500/15 px-2.5 py-1 font-mono text-xs font-semibold text-rose-300">
+              WATCHING ONLY
+            </span>
+          </div>
+
+          <p id="setupSummaryText" class="text-sm sm:text-[15px] leading-relaxed text-slate-200">
+            <span class="font-bold text-rose-400">Bearish</span> on the 15m with price below the 5m EMA 200, so it's hunting sells only. Price is near the sell range at <span class="font-mono text-white">4,159.67</span> to <span class="font-mono text-white">4,160.38</span>, but it has <span class="font-mono text-cyan-300">3 of 9</span> confluences and it fails a required check, so it's skipped.
+          </p>
+
+          <!-- Next Buy/Sell Range Sub-box -->
+          <div class="mt-4 rounded-xl border border-[#183547] bg-[#071219]/90 p-3.5 space-y-2 text-xs sm:text-sm">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="text-slate-400">Next buy range</span>
+              <span id="nextBuyRangeText" class="font-mono text-slate-200">none with $6.00 of room nearby</span>
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-2 border-t border-[#122938] pt-2">
+              <span class="text-slate-400">Next sell range</span>
+              <span id="nextSellRangeText" class="font-mono text-slate-200">none with $6.00 of room nearby</span>
+            </div>
+          </div>
+
+          <!-- Expandable Confluence Checklist -->
+          <div class="mt-3.5">
+            <button id="toggleWhyBtn" class="inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-cyan-400 hover:text-cyan-300 transition">
+              <span id="whyArrow" class="transition-transform">▸</span>
+              <span id="whySummaryLabel">Why: 3 of 9 confluences, a required check fails</span>
+            </button>
+
+            <div id="confluenceDetailsDrawer" class="hidden mt-3 rounded-xl border border-[#173242] bg-[#071118] p-3.5">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs" id="confluenceChecklistGrid">
+                <!-- Populated dynamically by JS -->
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. Interactive Live Candlestick Chart (CHoCH / BOS / Zones / EMA 200 / VWAP) -->
+        <section class="cyber-panel hud-bracket rounded-2xl p-4 sm:p-5">
+          <!-- Top Timeframe & Scenario Controls -->
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <div class="flex flex-wrap items-center gap-1.5" id="timeframeButtons">
+              <button data-tf="1m" class="tf-btn rounded-lg border border-[#1c3c4f] bg-[#091720] px-3 py-1.5 font-mono text-xs font-semibold text-slate-300 hover:border-cyan-400">1m</button>
+              <button data-tf="5m" class="tf-btn rounded-lg border border-cyan-400 bg-cyan-400 px-3 py-1.5 font-mono text-xs font-bold text-[#041017] shadow-[0_0_12px_rgba(24,212,232,0.45)]">5m</button>
+              <button data-tf="15m" class="tf-btn rounded-lg border border-[#1c3c4f] bg-[#091720] px-3 py-1.5 font-mono text-xs font-semibold text-slate-300 hover:border-cyan-400">15m</button>
+              <button data-tf="1H" class="tf-btn rounded-lg border border-[#1c3c4f] bg-[#091720] px-3 py-1.5 font-mono text-xs font-semibold text-slate-300 hover:border-cyan-400">1H</button>
+              <button data-tf="4H" class="tf-btn rounded-lg border border-[#1c3c4f] bg-[#091720] px-3 py-1.5 font-mono text-xs font-semibold text-slate-300 hover:border-cyan-400">4H</button>
+              <button data-tf="Daily" class="tf-btn rounded-lg border border-[#1c3c4f] bg-[#091720] px-3 py-1.5 font-mono text-xs font-semibold text-slate-300 hover:border-cyan-400">Daily</button>
+            </div>
+
+            <!-- Live Structure Simulation Triggers -->
+            <div class="flex flex-wrap items-center gap-1.5">
+              <button id="simBullBosBtn" class="rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-1.5 font-mono text-[11px] font-semibold text-emerald-300 hover:bg-emerald-500/25 active:scale-95" title="Simulate a bullish CHoCH + heavy BOS impulse">
+                + Bullish BOS
+              </button>
+              <button id="simBearBosBtn" class="rounded-lg border border-rose-500/40 bg-rose-500/15 px-2.5 py-1.5 font-mono text-[11px] font-semibold text-rose-300 hover:bg-rose-500/25 active:scale-95" title="Simulate a bearish CHoCH + heavy BOS drop">
+                - Bearish BOS
+              </button>
+            </div>
+          </div>
+
+          <!-- Legend Toggles -->
+          <div class="flex flex-wrap items-center gap-4 text-xs text-slate-300 mb-3 select-none">
+            <label class="inline-flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" id="toggleBuyZone" checked class="accent-cyan-400 rounded" />
+              <span class="inline-block w-3 border-t-2 border-dashed border-emerald-400"></span>
+              <span>Buy zone</span>
+            </label>
+            <label class="inline-flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" id="toggleSellZone" checked class="accent-cyan-400 rounded" />
+              <span class="inline-block w-3 border-t-2 border-dashed border-rose-400"></span>
+              <span>Sell zone</span>
+            </label>
+            <label class="inline-flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" id="toggleVwap" checked class="accent-cyan-400 rounded" />
+              <span class="inline-block w-3 h-0.5 bg-cyan-400"></span>
+              <span>VWAP</span>
+            </label>
+            <label class="inline-flex items-center gap-1.5 cursor-pointer">
+              <input type="checkbox" id="toggleEma" checked class="accent-cyan-400 rounded" />
+              <span class="inline-block w-3 h-0.5 bg-slate-400"></span>
+              <span>EMA 200</span>
+            </label>
+          </div>
+
+          <!-- Responsive Canvas Wrapper -->
+          <div id="chartContainer" class="relative w-full h-[320px] sm:h-[370px] rounded-xl border border-[#142d3d] bg-[#060f16] overflow-hidden">
+            <canvas id="priceChartCanvas" class="block w-full h-full cursor-crosshair"></canvas>
+            <!-- Crosshair Hover Tooltip -->
+            <div id="chartTooltip" class="pointer-events-none hidden absolute top-2 left-2 rounded-lg border border-cyan-500/30 bg-[#08151f]/90 px-2.5 py-1.5 font-mono text-[11px] text-slate-200 backdrop-blur-sm">
+              O: -- H: -- L: -- C: --
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. Multi-Timeframe Bias & Volume Pressure -->
+        <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <!-- Timeframe Alignment & Indicators -->
+          <section class="cyber-panel hud-bracket rounded-2xl p-4 sm:p-5">
+            <h3 class="font-mono text-xs font-semibold uppercase tracking-widest text-cyan-400 mb-3">Multi-Timeframe Bias</h3>
+            <div class="grid grid-cols-4 gap-2 text-center mb-4">
+              <div class="rounded-xl border border-[#163142] bg-[#08141d] p-2">
+                <div class="text-[11px] text-slate-400 font-mono">1 Hour</div>
+                <div id="bias1H" class="mt-0.5 text-xs sm:text-sm font-bold text-emerald-400">Bullish</div>
+              </div>
+              <div class="rounded-xl border border-[#163142] bg-[#08141d] p-2">
+                <div class="text-[11px] text-slate-400 font-mono">15 min</div>
+                <div id="bias15m" class="mt-0.5 text-xs sm:text-sm font-bold text-rose-400">Bearish</div>
+              </div>
+              <div class="rounded-xl border border-[#163142] bg-[#08141d] p-2">
+                <div class="text-[11px] text-slate-400 font-mono">5 min</div>
+                <div id="bias5m" class="mt-0.5 text-xs sm:text-sm font-bold text-rose-400">Bearish</div>
+              </div>
+              <div class="rounded-xl border border-[#163142] bg-[#08141d] p-2">
+                <div class="text-[11px] text-slate-400 font-mono">1 min</div>
+                <div id="bias1m" class="mt-0.5 text-xs sm:text-sm font-bold text-emerald-400">Bullish</div>
+              </div>
+            </div>
+
+            <div class="space-y-2.5 text-xs sm:text-sm border-t border-[#152e3e] pt-3">
+              <div class="flex items-center justify-between">
+                <span class="text-slate-300">5m EMA 200</span>
+                <div class="font-mono">
+                  <span id="ema200Val" class="text-white font-semibold">4,164.95</span>
+                  <span id="ema200Rel" class="ml-1.5 text-rose-400">price below</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-slate-300">Today's VWAP</span>
+                <div class="font-mono">
+                  <span id="vwapVal" class="text-white font-semibold">4,163.54</span>
+                  <span id="vwapRel" class="ml-1.5 text-rose-400">price below</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-slate-300">15m average range</span>
+                <span id="avgRangeVal" class="font-mono text-white font-semibold">$0.84</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Volume & Buy/Sell Pressure -->
+          <section class="cyber-panel hud-bracket rounded-2xl p-4 sm:p-5">
+            <h3 class="font-mono text-xs font-semibold uppercase tracking-widest text-cyan-400 mb-2">Volume</h3>
+            <div class="flex items-baseline gap-2">
+              <span id="volOzDisplay" class="font-mono text-3xl font-bold text-white">330 oz</span>
+            </div>
+            <p id="volUsdDisplay" class="text-xs text-slate-400 mt-0.5">traded today, about $1.37M</p>
+
+            <div class="mt-3 space-y-1.5 text-xs">
+              <div class="flex justify-between">
+                <span class="text-slate-400">Last hour</span>
+                <span class="font-mono text-slate-200"><strong id="lastHourOz" class="text-white">56 oz</strong> <span class="text-rose-400">0.5x normal</span></span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Current 5m candle</span>
+                <span class="font-mono text-slate-200"><strong id="currCandleOz" class="text-white">1 oz</strong> <span class="text-slate-400">0.2x average</span></span>
+              </div>
+            </div>
+
+            <!-- Last 15 Minutes Pressure Bar -->
+            <div class="mt-3.5">
+              <div class="text-xs text-slate-300 mb-1">Last 15 minutes</div>
+              <div class="h-2.5 w-full overflow-hidden rounded-full bg-rose-500 flex">
+                <div id="bar15mBuy" class="h-full bg-emerald-400 transition-all duration-500" style="width: 78%"></div>
+              </div>
+              <div class="mt-1 flex justify-between font-mono text-[11px]">
+                <span id="label15mBuy" class="text-emerald-400">Buy 78%</span>
+                <span id="label15mSell" class="text-rose-400">Sell 22%</span>
+              </div>
+            </div>
+
+            <!-- Today Pressure Bar -->
+            <div class="mt-3">
+              <div class="text-xs text-slate-300 mb-1">Today</div>
+              <div class="h-2.5 w-full overflow-hidden rounded-full bg-rose-500 flex">
+                <div id="barTodayBuy" class="h-full bg-emerald-400 transition-all duration-500" style="width: 63%"></div>
+              </div>
+              <div class="mt-1 flex justify-between font-mono text-[11px]">
+                <span id="labelTodayBuy" class="text-emerald-400">Buy 63%</span>
+                <span id="labelTodaySell" class="text-rose-400">Sell 37%</span>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- 4. Key Levels Today & Buy/Sell Zones Table -->
+        <div class="grid grid-cols-1 gap-5 xl:grid-cols-12">
+          <!-- Key Levels Today -->
+          <section class="cyber-panel hud-bracket rounded-2xl p-4 sm:p-5 xl:col-span-5">
+            <h3 class="font-mono text-xs font-semibold uppercase tracking-widest text-cyan-400 mb-3">Key Levels Today</h3>
+            <div id="keyLevelsList" class="space-y-2.5 text-xs sm:text-sm">
+              <!-- Populated dynamically with live deltas -->
+            </div>
+            <p class="mt-4 text-[11px] leading-relaxed text-slate-400 border-t border-[#152e3e] pt-3">
+              Gold often reacts at the previous day's high and low, the Asian range, and every $5 round number. Zones sitting on these get extra weight.
+            </p>
+          </section>
+
+          <!-- Buy and Sell Zones Table -->
+          <section class="cyber-panel hud-bracket rounded-2xl p-4 sm:p-5 xl:col-span-7">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-mono text-xs font-semibold uppercase tracking-widest text-cyan-400">Buy and Sell Zones</h3>
+              <span class="font-mono text-[11px] text-slate-400">Max Risk Cap: <strong id="riskCapBadge" class="text-cyan-300">$4.00</strong></span>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-[#183547] font-mono text-[10px] uppercase tracking-wider text-slate-400">
+                    <th class="pb-2 pr-2">Entry Range</th>
+                    <th class="pb-2 px-2">Stop</th>
+                    <th class="pb-2 px-2">TP1 / 2 / 3</th>
+                    <th class="pb-2 pl-2">Why It Matters</th>
+                  </tr>
+                </thead>
+                <tbody id="zonesTableBody" class="divide-y divide-[#132938] text-xs">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <!-- 5. High-Impact USD News & AI Learning / Paper-Trade Engine -->
+        <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <!-- News Card -->
+          <section class="cyber-panel hud-bracket rounded-2xl p-4 sm:p-5">
+            <h3 class="font-mono text-xs font-semibold uppercase tracking-widest text-cyan-400 mb-2">Today's High-Impact USD News</h3>
+            <p class="text-xs text-slate-400 mb-2">ForexFactory calendar schedule (local time)</p>
+            <div class="rounded-xl border border-[#173242] bg-[#071219] p-3 text-xs sm:text-sm text-slate-200">
+              No high-impact USD news blocking entries right now. Next: <strong class="text-cyan-300">Core PCE Price Index m/m</strong>, Wed 15:30.
+            </div>
+          </section>
+
+          <!-- AI Learning & Smart Exits Card -->
+          <section class="cyber-panel hud-bracket rounded-2xl p-4 sm:p-5">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="font-mono text-xs font-semibold uppercase tracking-widest text-cyan-400">AI Brain &amp; Paper Trader</h3>
+              <span class="font-mono text-[11px] text-emerald-400">Saved in Browser</span>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 text-center my-3">
+              <div class="rounded-xl border border-[#163142] bg-[#08141d] p-2">
+                <div class="text-[10px] text-slate-400 font-mono">LESSONS</div>
+                <div id="aiLessonsCount" class="font-mono text-base font-bold text-white mt-0.5">0</div>
+              </div>
+              <div class="rounded-xl border border-[#163142] bg-[#08141d] p-2">
+                <div class="text-[10px] text-slate-400 font-mono">W / L RATE</div>
+                <div id="aiWinRate" class="font-mono text-base font-bold text-emerald-400 mt-0.5">0%</div>
+              </div>
+              <div class="rounded-xl border border-[#163142] bg-[#08141d] p-2">
+                <div class="text-[10px] text-slate-400 font-mono">SMART EXITS</div>
+                <div id="aiFilledCount" class="font-mono text-base font-bold text-cyan-300 mt-0.5">0 / 40</div>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+              <button id="runPaperSimBtn" class="flex-1 rounded-xl border border-cyan-500/40 bg-cyan-500/15 px-3 py-2 text-xs font-semibold text-cyan-300 hover:bg-cyan-500/25">
+                + Simulate Paper Trade
+              </button>
+              <button id="resetAiBtn" class="rounded-xl border border-slate-700 bg-slate-800/50 px-3 py-2 text-xs text-slate-400 hover:text-white">
+                Reset
+              </button>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN (4 cols on desktop): LIVE INTERACTIVE BOT CHAT & SIGNAL STREAM -->
+      <aside class="lg:col-span-4">
+        <div class="cyber-panel hud-bracket rounded-2xl flex flex-col h-[560px] lg:h-[calc(100vh-140px)] lg:sticky lg:top-4">
+          <!-- Chat Header -->
+          <div class="flex items-center justify-between border-b border-[#173242] px-4 py-3.5">
+            <div class="flex items-center gap-2.5">
+              <div class="relative flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-400/50 bg-cyan-950/50">
+                <span class="font-mono text-xs font-bold text-cyan-300">AI</span>
+                <span class="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0b1821] bg-emerald-400"></span>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-white">PUTIN PABLO FX Live Chat</h3>
+                <p class="text-[11px] text-emerald-400 font-mono">Online • Streaming XAUUSD Signals</p>
+              </div>
+            </div>
+            <button id="clearChatBtn" class="rounded-lg border border-[#1c3c4f] px-2.5 py-1 text-[11px] text-slate-400 hover:text-white">
+              Clear
+            </button>
+          </div>
+
+          <!-- Live Messages Feed -->
+          <div id="chatMessagesFeed" class="flex-1 overflow-y-auto p-3.5 space-y-3 text-xs sm:text-sm">
+            <!-- Messages appended dynamically -->
+          </div>
+
+          <!-- Quick Prompt Chips -->
+          <div class="border-t border-[#132938] bg-[#071219]/80 px-3 py-2 flex gap-1.5 overflow-x-auto">
+            <button data-prompt="Status" class="quick-chat-chip shrink-0 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-1 font-mono text-[11px] text-cyan-300 hover:bg-cyan-500/20">
+              Status
+            </button>
+            <button data-prompt="Why skipped?" class="quick-chat-chip shrink-0 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-1 font-mono text-[11px] text-cyan-300 hover:bg-cyan-500/20">
+              Why skipped?
+            </button>
+            <button data-prompt="Best zone now" class="quick-chat-chip shrink-0 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-1 font-mono text-[11px] text-cyan-300 hover:bg-cyan-500/20">
+              Best zone
+            </button>
+            <button data-prompt="Paper trade" class="quick-chat-chip shrink-0 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 font-mono text-[11px] text-emerald-300 hover:bg-emerald-500/20">
+              Paper trade
+            </button>
+          </div>
+
+          <!-- Chat Input Form -->
+          <form id="liveChatForm" class="border-t border-[#173242] p-3 flex items-center gap-2">
+            <input
+              id="chatInputField"
+              type="text"
+              autocomplete="off"
+              placeholder="Ask bot (e.g., bias, BOS, zones, risk)..."
+              class="w-full rounded-xl border border-[#1d3e52] bg-[#071219] px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
+            />
+            <button
+              type="submit"
+              class="shrink-0 rounded-xl bg-cyan-400 px-4 py-2.5 text-xs sm:text-sm font-bold text-[#041017] transition hover:bg-cyan-300 active:scale-95"
+            >
+              Send
+            </button>
+          </form>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- Brand Footer -->
+  <footer class="mx-auto max-w-7xl px-4 pt-8 pb-4 sm:px-6 text-center text-xs text-slate-500 font-mono">
+    PUTIN PABLO FX • XAUUSD Algorithmic Scalper &amp; Liquidity Structure Scanner
+  </footer>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
+    <div class="cyber-panel hud-bracket w-full max-w-md rounded-2xl p-5 sm:p-6">
+      <div class="flex items-center justify-between border-b border-[#173242] pb-3 mb-4">
+        <h3 class="text-lg font-bold text-white">Scanner &amp; Broker Settings</h3>
+        <button id="closeSettingsBtn" class="rounded-lg border border-slate-700 px-2.5 py-1 text-xs text-slate-300 hover:text-white">✕</button>
+      </div>
+
+      <div class="space-y-4 text-xs sm:text-sm">
+        <div>
+          <label class="block text-slate-300 mb-1">XM MT5 Bid Offset ($ per oz)</label>
+          <input id="inputBidOffset" type="number" step="0.01" value="0.00" class="w-full rounded-xl border border-[#1d3e52] bg-[#071219] px-3 py-2 font-mono text-white focus:border-cyan-400 focus:outline-none" />
+          <p class="mt-1 text-[11px] text-slate-400">Shift all zones &amp; live feed to match your broker's XAUUSD bid.</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-300 mb-1">Max Zone Risk ($)</label>
+            <input id="inputMaxRisk" type="number" step="0.10" value="4.00" class="w-full rounded-xl border border-[#1d3e52] bg-[#071219] px-3 py-2 font-mono text-white focus:border-cyan-400 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-slate-300 mb-1">Min Room ($)</label>
+            <input id="inputMinRoom" type="number" step="0.50" value="6.00" class="w-full rounded-xl border border-[#1d3e52] bg-[#071219] px-3 py-2 font-mono text-white focus:border-cyan-400 focus:outline-none" />
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end gap-2.5">
+        <button id="cancelSettingsBtn" class="rounded-xl border border-slate-700 px-4 py-2 text-xs font-semibold text-slate-300 hover:text-white">Cancel</button>
+        <button id="saveSettingsBtn" class="rounded-xl bg-cyan-400 px-4 py-2 text-xs font-bold text-[#041017] hover:bg-cyan-300">Apply Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // PUTIN PABLO FX — XAUUSD LIVE SCALPER, STRUCTURE ENGINE & LIVE CHAT BOT
+    // =========================================================================
+
+    const STORAGE_KEY = 'putin_pablo_fx_xauusd_state_v1';
+
+    // Core application state matching screenshots
+    const state = {
+      symbol: 'XAUUSD',
+      basePrice: 4160.83,
+      openPrice: 4162.70,
+      bidOffset: 0.00,
+      maxZoneRisk: 4.00,
+      minRoomDollars: 6.00,
+      alertsEnabled: false,
+      isStreaming: true,
+      secondsSinceUpdate: 0,
+      activeTimeframe: '5m',
+
+      // Indicators & Multi-TF bias
+      bias: {
+        '1H': 'Bullish',
+        '15m': 'Bearish',
+        '5m': 'Bearish',
+        '1m': 'Bullish'
+      },
+      ema200_5m: 4164.95,
+      vwapToday: 4163.54,
+      avgRange15m: 0.84,
+
+      // Volume proxy
+      volOz: 330,
+      lastHourOz: 56,
+      currCandleOz: 1,
+      buy15mPct: 78,
+      buyTodayPct: 63,
+
+      // Key Levels Today
+      keyLevels: [
+        { label: 'Previous day high', price: 4193.66 },
+        { label: 'Asia high', price: 4165.71 },
+        { label: 'Asia low', price: 4162.07 },
+        { label: 'Previous day low', price: 4150.01 },
+        { label: 'Round number above', price: 4165.00, isRound: true },
+        { label: 'Round number below', price: 4160.00, isRound: true },
+      ],
+
+      // Buy & Sell Zones
+      zones: [
+        {
+          id: 'SELL-1',
+          side: 'SELL',
+          entryLow: 4167.75,
+          entryHigh: 4170.15,
+          stop: 4171.15,
+          risk: 3.40,
+          tp1: 4161.75,
+          tp2: 4158.50,
+          tp3: 4154.00,
+          touches: 15,
+          tfs: 'M5/M15/H1',
+          withTrend: true,
+          room: 7.40,
+          tags: ['4,170', '15 touches, M5/M15/H1', 'with trend', '$7.40 room']
+        },
+        {
+          id: 'SELL-2',
+          side: 'SELL',
+          entryLow: 4166.07,
+          entryHigh: 4166.78,
+          stop: 4167.78,
+          risk: 1.70,
+          tp1: 4160.07,
+          tp2: 4157.20,
+          tp3: 4153.50,
+          touches: 2,
+          tfs: 'M5/M15',
+          withTrend: true,
+          room: 4.18,
+          tags: ['2 touches, M5/M15', 'with trend', 'only $4.18 room']
+        },
+        {
+          id: 'SELL-3',
+          side: 'SELL',
+          entryLow: 4164.68,
+          entryHigh: 4165.39,
+          stop: 4166.39,
+          risk: 1.70,
+          tp1: 4158.68,
+          tp2: 4155.40,
+          tp3: 4151.00,
+          touches: 13,
+          tfs: 'M5/M15/H1',
+          withTrend: true,
+          room: 3.51,
+          tags: ['Asia high', '4,165', '13 touches, M5/M15/H1', 'with trend', 'only $3.51 room']
+        },
+        {
+          id: 'BUY-1',
+          side: 'BUY',
+          entryLow: 4156.20,
+          entryHigh: 4157.40,
+          stop: 4154.50,
+          risk: 2.90,
+          tp1: 4163.40,
+          tp2: 4166.00,
+          tp3: 4169.50,
+          touches: 8,
+          tfs: 'M15/H1',
+          withTrend: false,
+          room: 6.80,
+          tags: ['8 touches, M15/H1', 'counter-trend', '$6.80 room']
+        }
+      ],
+
+      // Setup evaluation status
+      setupStatus: {
+        isAGrade: false,
+        direction: 'SELL',
+        confluencesMet: 3,
+        confluencesTotal: 9,
+        requiredCheckPassed: false,
+        lastStructureEvent: 'BOS (Bearish)',
+      },
+
+      // Persistent AI Brain State
+      ai: {
+        lessons: 12,
+        wins: 8,
+        losses: 4,
+        filledSetups: 12
+      },
+
+      // Chart Candles & Structure Labels
+      candles: [],
+      structureMarkers: [],
+      chartLayers: {
+        buyZone: true,
+        sellZone: true,
+        vwap: true,
+        ema: true
+      }
+    };
+
+    // Load saved AI learning state from localStorage
+    function loadSavedState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (parsed.ai) state.ai = { ...state.ai, ...parsed.ai };
+        if (typeof parsed.bidOffset === 'number') state.bidOffset = parsed.bidOffset;
+        if (typeof parsed.maxZoneRisk === 'number') state.maxZoneRisk = parsed.maxZoneRisk;
+        if (typeof parsed.minRoomDollars === 'number') state.minRoomDollars = parsed.minRoomDollars;
+      } catch (e) {
+        console.warn('Could not load saved state:', e);
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          ai: state.ai,
+          bidOffset: state.bidOffset,
+          maxZoneRisk: state.maxZoneRisk,
+          minRoomDollars: state.minRoomDollars
+        }));
+      } catch (e) {
+        console.warn('Could not save state:', e);
+      }
+    }
+
+    // Toast notification helper (no alert())
+    let toastTimer = null;
+    function showToast(msg) {
+      const banner = document.getElementById('toastBanner');
+      const text = document.getElementById('toastMessage');
+      text.textContent = msg;
+      banner.classList.remove('hidden');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        banner.classList.add('hidden');
+      }, 3600);
+    }
+
+    function fmtPrice(val) {
+      return (val + state.bidOffset).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    // =========================================================================
+    // SEED INITIAL CANDLESTICK SERIES WITH CHoCH & BOS MARKERS
+    // =========================================================================
+    function initCandles() {
+      const seedPrices = [
+        [4164.55, 4164.80, 4164.20, 4164.35],
+        [4164.35, 4164.60, 4164.15, 4164.25],
+        [4164.25, 4164.95, 4164.20, 4164.85], // Swing low BOS
+        [4164.85, 4165.10, 4164.65, 4164.75],
+        [4164.75, 4165.25, 4164.70, 4165.15],
+        [4165.15, 4165.20, 4164.55, 4164.65],
+        [4164.65, 4164.85, 4164.45, 4164.55],
+        [4164.55, 4164.75, 4164.40, 4164.60],
+        [4164.60, 4164.70, 4163.95, 4164.05], // CHoCH shift down
+        [4164.05, 4164.15, 4163.10, 4163.25],
+        [4163.25, 4163.45, 4162.85, 4163.00],
+        [4163.00, 4163.15, 4162.45, 4162.55], // BOS down
+        [4162.55, 4162.70, 4161.90, 4162.05],
+        [4162.05, 4162.20, 4161.50, 4161.65],
+        [4161.65, 4162.35, 4161.55, 4162.25],
+        [4162.25, 4162.40, 4161.25, 4161.40],
+        [4161.40, 4161.55, 4160.35, 4160.50], // BOS down
+        [4160.50, 4160.95, 4160.15, 4160.83]
+      ];
+
+      state.candles = seedPrices.map((p, idx) => ({
+        index: idx,
+        open: p[0],
+        high: p[1],
+        low: p[2],
+        close: p[3],
+        ema: 4166.15 - idx * 0.07,
+        vwap: 4164.25 - idx * 0.04
+      }));
+
+      state.structureMarkers = [
+        { index: 2, type: 'BOS', side: 'bull', price: 4164.15 },
+        { index: 8, type: 'CHoCH', side: 'bear', price: 4164.72 },
+        { index: 11, type: 'BOS', side: 'bear', price: 4163.48 },
+        { index: 16, type: 'BOS', side: 'bear', price: 4161.60 }
+      ];
+    }
+
+    // =========================================================================
+    // UI RENDERING FUNCTIONS
+    // =========================================================================
+    function renderAll() {
+      renderHeader();
+      renderSetupCard();
+      renderIndicatorsAndVolume();
+      renderKeyLevels();
+      renderZonesTable();
+      renderAiPanel();
+      drawChart();
+    }
+
+    function renderHeader() {
+      const displayPrice = state.basePrice + state.bidOffset;
+      const diff = state.basePrice - state.openPrice;
+      const pct = (diff / state.openPrice) * 100;
+      const sign = diff >= 0 ? '+' : '';
+
+      document.getElementById('livePriceDisplay').textContent = displayPrice.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+
+      const changeEl = document.getElementById('dailyChangeDisplay');
+      changeEl.textContent = `${sign}${diff.toFixed(2)} (${sign}${pct.toFixed(2)}%) today`;
+      changeEl.className = `font-mono text-xs sm:text-sm font-semibold ${diff >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+
+      document.getElementById('lastUpdatedText').textContent = state.isStreaming
+        ? `Live, updated ${state.secondsSinceUpdate}s ago`
+        : 'Feed paused';
+
+      const offsetSign = state.bidOffset >= 0 ? '+' : '-';
+      document.getElementById('offsetBadge').textContent = `${offsetSign}$${Math.abs(state.bidOffset).toFixed(2)}`;
+      document.getElementById('riskCapBadge').textContent = `$${state.maxZoneRisk.toFixed(2)}`;
+    }
+
+    function renderSetupCard() {
+      const s = state.setupStatus;
+      const headline = document.getElementById('setupHeadline');
+      const badge = document.getElementById('setupGradeBadge');
+      const summary = document.getElementById('setupSummaryText');
+      const whyLabel = document.getElementById('whySummaryLabel');
+
+      if (s.isAGrade) {
+        const isBuy = s.direction === 'BUY';
+        headline.textContent = `A-Grade ${s.direction} Setup Active`;
+        badge.textContent = 'A-GRADE SIGNAL';
+        badge.className = 'rounded-lg border border-emerald-500/50 bg-emerald-500/20 px-2.5 py-1 font-mono text-xs font-bold text-emerald-300';
+
+        const zoneLow = fmtPrice(isBuy ? 4161.20 : 4164.68);
+        const zoneHigh = fmtPrice(isBuy ? 4162.10 : 4165.39);
+        summary.innerHTML = `<span class="font-bold ${isBuy ? 'text-emerald-400' : 'text-rose-400'}">${isBuy ? 'Bullish' : 'Bearish'}</span> BOS confirmed with strong impulse and <span class="font-mono text-cyan-300">${s.confluencesMet} of ${s.confluencesTotal}</span> confluences aligned. Active ${s.direction.toLowerCase()} zone at <span class="font-mono text-white">${zoneLow}</span> to <span class="font-mono text-white">${zoneHigh}</span> passes risk cap ($${state.maxZoneRisk.toFixed(2)}) and room ($${state.minRoomDollars.toFixed(2)}) checks.`;
+        whyLabel.textContent = `Why: ${s.confluencesMet} of ${s.confluencesTotal} confluences, all required checks pass`;
+      } else {
+        headline.textContent = 'No A-grade setup';
+        badge.textContent = 'WATCHING ONLY';
+        badge.className = 'rounded-lg border border-rose-500/40 bg-rose-500/15 px-2.5 py-1 font-mono text-xs font-semibold text-rose-300';
+
+        const rLow = fmtPrice(4159.67);
+        const rHigh = fmtPrice(4160.38);
+        summary.innerHTML = `<span class="font-bold text-rose-400">Bearish</span> on the 15m with price below the 5m EMA 200, so it's hunting sells only. Price is near the sell range at <span class="font-mono text-white">${rLow}</span> to <span class="font-mono text-white">${rHigh}</span>, but it has <span class="font-mono text-cyan-300">${s.confluencesMet} of ${s.confluencesTotal}</span> confluences and it fails a required check, so it's skipped.`;
+        whyLabel.textContent = `Why: ${s.confluencesMet} of ${s.confluencesTotal} confluences, a required check fails`;
+      }
+
+      document.getElementById('nextBuyRangeText').textContent = s.isAGrade && s.direction === 'BUY'
+        ? `${fmtPrice(4161.20)} – ${fmtPrice(4162.10)} ($7.80 room)`
+        : `none with $${state.minRoomDollars.toFixed(2)} of room nearby`;
+
+      document.getElementById('nextSellRangeText').textContent = s.isAGrade && s.direction === 'SELL'
+        ? `${fmtPrice(4164.68)} – ${fmtPrice(4165.39)} ($7.40 room)`
+        : `none with $${state.minRoomDollars.toFixed(2)} of room nearby`;
+
+      // Populate 9-point confluence checklist
+      const checks = [
+        { name: '15m Trend Alignment', pass: true },
+        { name: 'Price vs 5m EMA 200', pass: true },
+        { name: 'Price vs Today VWAP', pass: true },
+        { name: 'BOS Impulse Confirmed', pass: s.isAGrade },
+        { name: `Room >= $${state.minRoomDollars.toFixed(2)} (Required)`, pass: s.isAGrade },
+        { name: `Worst-Edge Risk <= $${state.maxZoneRisk.toFixed(2)}`, pass: s.isAGrade },
+        { name: 'Key Level / Round # Weight', pass: s.isAGrade },
+        { name: 'Volume Pressure Support', pass: s.isAGrade },
+        { name: 'No High-Impact News Block', pass: s.isAGrade }
+      ];
+
+      const grid = document.getElementById('confluenceChecklistGrid');
+      grid.innerHTML = checks.map(c => `
+        <div class="flex items-center justify-between rounded-lg border border-[#142c3b] bg-[#091620] px-2.5 py-1.5">
+          <span class="text-slate-300">${c.name}</span>
+          <span class="font-mono font-bold ${c.pass ? 'text-emerald-400' : 'text-rose-400'}">${c.pass ? 'PASS' : 'FAIL'}</span>
+        </div>
+      `).join('');
+    }
+
+    function renderIndicatorsAndVolume() {
+      const tfs = ['1H', '15m', '5m', '1m'];
+      tfs.forEach(tf => {
+        const el = document.getElementById(`bias${tf}`);
+        const val = state.bias[tf];
+        el.textContent = val;
+        el.className = `mt-0.5 text-xs sm:text-sm font-bold ${val === 'Bullish' ? 'text-emerald-400' : 'text-rose-400'}`;
+      });
+
+      const price = state.basePrice;
+      const emaAbove = price >= state.ema200_5m;
+      const vwapAbove = price >= state.vwapToday;
+
+      document.getElementById('ema200Val').textContent = fmtPrice(state.ema200_5m);
+      const emaRel = document.getElementById('ema200Rel');
+      emaRel.textContent = emaAbove ? 'price above' : 'price below';
+      emaRel.className = `ml-1.5 ${emaAbove ? 'text-emerald-400' : 'text-rose-400'}`;
+
+      document.getElementById('vwapVal').textContent = fmtPrice(state.vwapToday);
+      const vwapRel = document.getElementById('vwapRel');
+      vwapRel.textContent = vwapAbove ? 'price above' : 'price below';
+      vwapRel.className = `ml-1.5 ${vwapAbove ? 'text-emerald-400' : 'text-rose-400'}`;
+
+      document.getElementById('avgRangeVal').textContent = `$${state.avgRange15m.toFixed(2)}`;
+
+      // Volume
+      const usdMillions = ((state.volOz * (state.basePrice + state.bidOffset)) / 1_000_000).toFixed(2);
+      document.getElementById('volOzDisplay').textContent = `${state.volOz} oz`;
+      document.getElementById('volUsdDisplay').textContent = `traded today, about $${usdMillions}M`;
+      document.getElementById('lastHourOz').textContent = `${state.lastHourOz} oz`;
+      document.getElementById('currCandleOz').textContent = `${state.currCandleOz} oz`;
+
+      const sell15 = 100 - state.buy15mPct;
+      document.getElementById('bar15mBuy').style.width = `${state.buy15mPct}%`;
+      document.getElementById('label15mBuy').textContent = `Buy ${state.buy15mPct}%`;
+      document.getElementById('label15mSell').textContent = `Sell ${sell15}%`;
+
+      const sellToday = 100 - state.buyTodayPct;
+      document.getElementById('barTodayBuy').style.width = `${state.buyTodayPct}%`;
+      document.getElementById('labelTodayBuy').textContent = `Buy ${state.buyTodayPct}%`;
+      document.getElementById('labelTodaySell').textContent = `Sell ${sellToday}%`;
+    }
+
+    function renderKeyLevels() {
+      const container = document.getElementById('keyLevelsList');
+      container.innerHTML = state.keyLevels.map(lvl => {
+        const delta = lvl.price - state.basePrice;
+        const sign = delta >= 0 ? '+' : '-';
+        const deltaStr = lvl.isRound ? '' : `<span class="ml-2 font-mono text-xs ${delta >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${sign}$${Math.abs(delta).toFixed(2)}</span>`;
+        return `
+          <div class="flex items-center justify-between border-b border-[#122836] pb-2 last:border-none last:pb-0">
+            <span class="text-slate-300">${lvl.label}</span>
+            <div class="text-right font-mono">
+              <span class="font-semibold text-white">${fmtPrice(lvl.price)}</span>
+              ${deltaStr}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderZonesTable() {
+      const tbody = document.getElementById('zonesTableBody');
+      tbody.innerHTML = state.zones.map(z => {
+        const isSell = z.side === 'SELL';
+        const overRisk = z.risk > state.maxZoneRisk;
+        const lowRoom = z.room < state.minRoomDollars;
+
+        return `
+          <tr class="hover:bg-[#0d202d]/70 transition">
+            <td class="py-3 pr-2 align-top font-mono">
+              <span class="inline-block rounded px-1.5 py-0.5 text-[10px] font-bold mb-1 ${isSell ? 'bg-rose-500/20 text-rose-300' : 'bg-emerald-500/20 text-emerald-300'}">${z.side}</span>
+              <div class="font-semibold text-white">${fmtPrice(z.entryLow)}</div>
+              <div class="text-slate-300">${fmtPrice(z.entryHigh)}</div>
+            </td>
+            <td class="py-3 px-2 align-top font-mono">
+              <div class="text-slate-200">${fmtPrice(z.stop)}</div>
+              <div class="${overRisk ? 'text-rose-400' : 'text-cyan-300'} font-semibold">$${z.risk.toFixed(2)}</div>
+              <div class="text-[10px] text-slate-500">max</div>
+            </td>
+            <td class="py-3 px-2 align-top font-mono">
+              <div class="text-emerald-300 font-semibold">${fmtPrice(z.tp1)}</div>
+              <div class="text-slate-400 text-[11px]">${fmtPrice(z.tp2)}</div>
+              <div class="text-slate-500 text-[11px]">${fmtPrice(z.tp3)}</div>
+            </td>
+            <td class="py-3 pl-2 align-top">
+              <div class="flex flex-wrap gap-1">
+                ${z.tags.map(tag => {
+                  const warn = tag.includes('only') && lowRoom;
+                  return `<span class="rounded-md border ${warn ? 'border-amber-500/30 bg-amber-500/10 text-amber-300' : 'border-[#1d3e52] bg-[#091822] text-cyan-200'} px-1.5 py-0.5 font-mono text-[10px]">${tag}</span>`;
+                }).join('')}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderAiPanel() {
+      const { lessons, wins, losses, filledSetups } = state.ai;
+      const total = wins + losses;
+      const wr = total > 0 ? Math.round((wins / total) * 100) : 0;
+
+      document.getElementById('aiLessonsCount').textContent = lessons;
+      document.getElementById('aiWinRate').textContent = `${wr}%`;
+      document.getElementById('aiFilledCount').textContent = `${filledSetups} / 40`;
+    }
+
+    // =========================================================================
+    // HTML5 CANVAS CANDLESTICK CHART WITH CHoCH & BOS OVERLAYS
+    // =========================================================================
+    function drawChart() {
+      const container = document.getElementById('chartContainer');
+      const canvas = document.getElementById('priceChartCanvas');
+      if (!container || !canvas) return;
+
+      const dpr = window.devicePixelRatio || 1;
+      const rect = container.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+
+      const width = rect.width;
+      const height = rect.height;
+      const rightAxisWidth = 68;
+      const bottomAxisHeight = 24;
+      const plotWidth = width - rightAxisWidth;
+      const plotHeight = height - bottomAxisHeight;
+
+      // Clear background
+      ctx.fillStyle = '#060f16';
+      ctx.fillRect(0, 0, width, height);
+
+      if (state.candles.length === 0) return;
+
+      // Determine visible Y range
+      let minP = Infinity;
+      let maxP = -Infinity;
+      state.candles.forEach(c => {
+        if (c.low < minP) minP = c.low;
+        if (c.high > maxP) maxP = c.high;
+        if (state.chartLayers.ema && c.ema > maxP) maxP = c.ema;
+        if (state.chartLayers.vwap && c.vwap > maxP) maxP = c.vwap;
+      });
+      const pad = (maxP - minP) * 0.16 || 1.5;
+      minP -= pad;
+      maxP += pad;
+
+      const priceToY = (p) => plotHeight - ((p - minP) / (maxP - minP)) * plotHeight;
+
+      // Draw subtle grid lines & Y-axis labels
+      ctx.strokeStyle = 'rgba(24, 54, 72, 0.45)';
+      ctx.lineWidth = 1;
+      ctx.font = '11px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#7b98aa';
+      ctx.textAlign = 'left';
+
+      const steps = 6;
+      for (let i = 0; i <= steps; i++) {
+        const val = minP + ((maxP - minP) / steps) * i;
+        const y = priceToY(val);
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(plotWidth, y);
+        ctx.stroke();
+
+        ctx.fillText((val + state.bidOffset).toFixed(2), plotWidth + 8, y + 4);
+      }
+
+      // Draw Shaded Sell & Buy Zones
+      if (state.chartLayers.sellZone) {
+        const yTop = priceToY(4165.39);
+        const yBot = priceToY(4164.68);
+        ctx.fillStyle = 'rgba(244, 63, 94, 0.12)';
+        ctx.fillRect(0, yTop, plotWidth, Math.max(4, yBot - yTop));
+        ctx.strokeStyle = 'rgba(244, 63, 94, 0.55)';
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(0, yBot);
+        ctx.lineTo(plotWidth, yBot);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      if (state.chartLayers.buyZone) {
+        const yTop = priceToY(4160.38);
+        const yBot = priceToY(4159.67);
+        ctx.fillStyle = 'rgba(16, 217, 152, 0.10)';
+        ctx.fillRect(0, yTop, plotWidth, Math.max(4, yBot - yTop));
+        ctx.strokeStyle = 'rgba(16, 217, 152, 0.55)';
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(0, yTop);
+        ctx.lineTo(plotWidth, yTop);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      const count = state.candles.length;
+      const stepX = plotWidth / Math.max(count + 2, 18);
+      const candleW = Math.max(4, Math.min(14, stepX * 0.62));
+
+      // Draw EMA 200 line
+      if (state.chartLayers.ema) {
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        state.candles.forEach((c, i) => {
+          const x = (i + 1) * stepX;
+          const y = priceToY(c.ema);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+      }
+
+      // Draw VWAP line
+      if (state.chartLayers.vwap) {
+        ctx.strokeStyle = '#18d4e8';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        state.candles.forEach((c, i) => {
+          const x = (i + 1) * stepX;
+          const y = priceToY(c.vwap);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+      }
+
+      // Draw Candlesticks
+      state.candles.forEach((c, i) => {
+        const x = (i + 1) * stepX;
+        const isBull = c.close >= c.open;
+        const color = isBull ? '#10d998' : '#f43f5e';
+
+        const yHigh = priceToY(c.high);
+        const yLow = priceToY(c.low);
+        const yOpen = priceToY(c.open);
+        const yClose = priceToY(c.close);
+
+        // Wick
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(x, yHigh);
+        ctx.lineTo(x, yLow);
+        ctx.stroke();
+
+        // Body
+        ctx.fillStyle = color;
+        const bodyTop = Math.min(yOpen, yClose);
+        const bodyH = Math.max(2, Math.abs(yClose - yOpen));
+        ctx.fillRect(x - candleW / 2, bodyTop, candleW, bodyH);
+      });
+
+      // Draw CHoCH & BOS Structure Badges + Dots
+      ctx.font = 'bold 11px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      state.structureMarkers.forEach(m => {
+        if (m.index >= state.candles.length) return;
+        const x = (m.index + 1) * stepX;
+        const y = priceToY(m.price);
+        const isBull = m.side === 'bull';
+        const color = isBull ? '#10d998' : '#f43f5e';
+
+        // Dot
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Label
+        ctx.fillText(m.type, x, isBull ? y + 16 : y - 10);
+      });
+
+      // Current Price Dashed Line & Highlighted Pill on Right Axis
+      const currY = priceToY(state.basePrice);
+      ctx.strokeStyle = '#10d998';
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(0, currY);
+      ctx.lineTo(plotWidth, currY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = '#10d998';
+      ctx.beginPath();
+      ctx.roundRect(plotWidth + 3, currY - 10, rightAxisWidth - 6, 20, 4);
+      ctx.fill();
+
+      ctx.fillStyle = '#04120d';
+      ctx.font = 'bold 11px "JetBrains Mono", monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText((state.basePrice + state.bidOffset).toFixed(2), plotWidth + 7, currY + 4);
+    }
+
+    // =========================================================================
+    // LIVE TICK ENGINE & STRUCTURE BREAKOUT SIMULATOR
+    // =========================================================================
+    function processLiveTick() {
+      if (!state.isStreaming) {
+        renderHeader();
+        return;
+      }
+
+      state.secondsSinceUpdate = 0;
+
+      // Subtle realistic gold tick movement
+      const delta = (Math.random() - 0.49) * 0.38;
+      state.basePrice = Number((state.basePrice + delta).toFixed(2));
+
+      const last = state.candles[state.candles.length - 1];
+      last.close = state.basePrice;
+      if (state.basePrice > last.high) last.high = state.basePrice;
+      if (state.basePrice < last.low) last.low = state.basePrice;
+
+      // Periodically roll into a new candle
+      if (Math.random() < 0.22) {
+        const nextIdx = state.candles.length;
+        state.candles.push({
+          index: nextIdx,
+          open: state.basePrice,
+          high: state.basePrice + 0.12,
+          low: state.basePrice - 0.12,
+          close: state.basePrice,
+          ema: last.ema - 0.03,
+          vwap: last.vwap + (delta * 0.2)
+        });
+        if (state.candles.length > 34) {
+          state.candles.shift();
+          state.candles.forEach((c, idx) => (c.index = idx));
+          state.structureMarkers = state.structureMarkers
+            .map(m => ({ ...m, index: m.index - 1 }))
+            .filter(m => m.index >= 0);
+        }
+        state.volOz += Math.floor(Math.random() * 4) + 1;
+        state.currCandleOz = Math.floor(Math.random() * 5) + 1;
+      }
+
+      renderAll();
+    }
+
+    function triggerStructureEvent(direction) {
+      const isBull = direction === 'BUY';
+      const last = state.candles[state.candles.length - 1];
+      const base = last.close;
+
+      // Create CHoCH followed by heavy BOS candle
+      const idx1 = state.candles.length;
+      const c1Close = isBull ? base + 1.45 : base - 1.45;
+      state.candles.push({
+        index: idx1,
+        open: base,
+        high: Math.max(base, c1Close) + 0.25,
+        low: Math.min(base, c1Close) - 0.25,
+        close: c1Close,
+        ema: last.ema,
+        vwap: last.vwap
+      });
+
+      const idx2 = state.candles.length;
+      const c2Close = isBull ? c1Close + 2.35 : c1Close - 2.35;
+      state.candles.push({
+        index: idx2,
+        open: c1Close,
+        high: Math.max(c1Close, c2Close) + 0.30,
+        low: Math.min(c1Close, c2Close) - 0.30,
+        close: c2Close,
+        ema: last.ema,
+        vwap: isBull ? c1Close - 0.4 : c1Close + 0.4
+      });
+
+      if (state.candles.length > 34) {
+        const trim = state.candles.length - 34;
+        state.candles.splice(0, trim);
+        state.candles.forEach((c, idx) => (c.index = idx));
+        state.structureMarkers = state.structureMarkers
+          .map(m => ({ ...m, index: m.index - trim }))
+          .filter(m => m.index >= 0);
+      }
+
+      const finalIdx1 = state.candles.length - 2;
+      const finalIdx2 = state.candles.length - 1;
+
+      state.structureMarkers.push(
+        {
+          index: finalIdx1,
+          type: 'CHoCH',
+          side: isBull ? 'bull' : 'bear',
+          price: isBull ? base - 0.2 : base + 0.2
+        },
+        {
+          index: finalIdx2,
+          type: 'BOS',
+          side: isBull ? 'bull' : 'bear',
+          price: isBull ? c1Close - 0.2 : c1Close + 0.2
+        }
+      );
+
+      state.basePrice = Number(c2Close.toFixed(2));
+      state.bias['15m'] = isBull ? 'Bullish' : 'Bearish';
+      state.bias['5m'] = isBull ? 'Bullish' : 'Bearish';
+      state.bias['1m'] = isBull ? 'Bullish' : 'Bearish';
+      state.buy15mPct = isBull ? 84 : 24;
+      state.volOz += 18;
+
+      // Upgrade setup to A-GRADE
+      state.setupStatus = {
+        isAGrade: true,
+        direction,
+        confluencesMet: 8,
+        confluencesTotal: 9,
+        requiredCheckPassed: true,
+        lastStructureEvent: `CHoCH → ${isBull ? 'Bullish' : 'Bearish'} BOS`
+      };
+
+      renderAll();
+
+      const alertText = isBull
+        ? `CHoCH → Bullish BOS confirmed @ ${fmtPrice(state.basePrice)}! Heavy buying impulse detected. A-Grade BUY setup unlocked (8/9 confluences).`
+        : `CHoCH → Bearish BOS confirmed @ ${fmtPrice(state.basePrice)}! Heavy selling breakdown detected. A-Grade SELL setup unlocked (8/9 confluences).`;
+
+      appendChatMessage('bot', alertText, true);
+      if (state.alertsEnabled) {
+        showToast(alertText);
+      }
+    }
+
+    // =========================================================================
+    // LIVE INTERACTIVE CHAT BOT
+    // =========================================================================
+    function appendChatMessage(sender, text, isSignal = false) {
+      const feed = document.getElementById('chatMessagesFeed');
+      const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      const wrapper = document.createElement('div');
+      wrapper.className = sender === 'user' ? 'flex justify-end' : 'flex justify-start';
+
+      if (sender === 'user') {
+        wrapper.innerHTML = `
+          <div class="max-w-[85%] rounded-2xl rounded-tr-sm bg-cyan-400 px-3.5 py-2.5 text-[#041017] shadow">
+            <p class="font-medium leading-snug">${escapeHtml(text)}</p>
+            <div class="mt-1 text-right font-mono text-[10px] opacity-75">${now}</div>
+          </div>
+        `;
+      } else {
+        const borderClass = isSignal
+          ? 'border-emerald-500/50 bg-emerald-950/30'
+          : 'border-[#183547] bg-[#091721]';
+        wrapper.innerHTML = `
+          <div class="max-w-[90%] rounded-2xl rounded-tl-sm border ${borderClass} px-3.5 py-2.5 text-slate-200 shadow">
+            <div class="flex items-center justify-between gap-2 mb-1">
+              <span class="font-mono text-[10px] font-bold uppercase tracking-wider ${isSignal ? 'text-emerald-400' : 'text-cyan-400'}">
+                ${isSignal ? '⚡ LIVE STRUCTURE ALERT' : 'PUTIN PABLO FX BOT'}
+              </span>
+              <span class="font-mono text-[10px] text-slate-500">${now}</span>
+            </div>
+            <p class="leading-relaxed whitespace-pre-line">${text}</p>
+          </div>
+        `;
+      }
+
+      feed.appendChild(wrapper);
+      feed.scrollTop = feed.scrollHeight;
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function generateBotReply(userMsg) {
+      const q = userMsg.toLowerCase().trim();
+      const priceStr = fmtPrice(state.basePrice);
+
+      if (q.includes('status') || q.includes('bias') || q.includes('summary')) {
+        return `XAUUSD is trading at ${priceStr}.\n• 15m Bias: ${state.bias['15m']} | 5m Bias: ${state.bias['5m']}\n• Setup Grade: ${state.setupStatus.isAGrade ? 'A-GRADE ' + state.setupStatus.direction : 'No A-grade setup (Watching)'}\n• Confluences: ${state.setupStatus.confluencesMet}/${state.setupStatus.confluencesTotal}`;
+      }
+
+      if (q.includes('why') || q.includes('skip') || q.includes('confluence')) {
+        if (state.setupStatus.isAGrade) {
+          return `Current setup is NOT skipped—it passed 8/9 confluences after a confirmed CHoCH → BOS impulse with >= $${state.minRoomDollars.toFixed(2)} room.`;
+        }
+        return `Skipped because only ${state.setupStatus.confluencesMet} of ${state.setupStatus.confluencesTotal} confluences are met and the required $${state.minRoomDollars.toFixed(2)} room check before the opposing zone failed.`;
+      }
+
+      if (q.includes('zone') || q.includes('sell') || q.includes('buy') || q.includes('level')) {
+        return `Top active zones right now:\n1. SELL ${fmtPrice(4167.75)}–${fmtPrice(4170.15)} (Stop ${fmtPrice(4171.15)} | TP1 ${fmtPrice(4161.75)} | $7.40 room)\n2. SELL ${fmtPrice(4164.68)}–${fmtPrice(4165.39)} (Asia High + 4,165 round #)\n3. BUY ${fmtPrice(4156.20)}–${fmtPrice(4157.40)} (Stop ${fmtPrice(4154.50)} | TP1 ${fmtPrice(4163.40)})`;
+      }
+
+      if (q.includes('bos') || q.includes('choch') || q.includes('structure')) {
+        return `Latest structure event: ${state.setupStatus.lastStructureEvent}. Tap "+ Bullish BOS" or "- Bearish BOS" above the chart to simulate a real-time Change of Character followed by a heavy Break of Structure impulse.`;
+      }
+
+      if (q.includes('paper') || q.includes('sim') || q.includes('trade')) {
+        runPaperTradeSimulation();
+        return `Logged a simulated paper trade! AI Brain now has ${state.ai.lessons} lessons (${state.ai.wins}W/${state.ai.losses}L) and ${state.ai.filledSetups}/40 filled setups toward Smart Exits.`;
+      }
+
+      if (q.includes('risk') || q.includes('setting') || q.includes('xm')) {
+        return `Current Risk & Broker Rules:\n• Max Zone Risk Cap: $${state.maxZoneRisk.toFixed(2)} (worst edge)\n• Min Room Required: $${state.minRoomDollars.toFixed(2)}\n• XM MT5 Bid Offset: $${state.bidOffset.toFixed(2)}`;
+      }
+
+      return `Live scan @ ${priceStr}: Monitoring 1m/5m/15m orderflow, VWAP (${fmtPrice(state.vwapToday)}), and 5m EMA 200 (${fmtPrice(state.ema200_5m)}). Ask me about "status", "why skipped", "zones", "BOS", or "paper trade".`;
+    }
+
+    function runPaperTradeSimulation() {
+      const won = Math.random() >= 0.35;
+      state.ai.lessons += 1;
+      state.ai.filledSetups = Math.min(40, state.ai.filledSetups + 1);
+      if (won) state.ai.wins += 1;
+      else state.ai.losses += 1;
+
+      saveState();
+      renderAiPanel();
+      showToast(won ? 'Paper trade WIN (+$6.20) recorded to AI Brain' : 'Paper trade LOSS (-$1.70) recorded to AI Brain');
+    }
+
+    // =========================================================================
+    // EVENT LISTENERS & INITIALIZATION
+    // =========================================================================
+    window.addEventListener('load', () => {
+      loadSavedState();
+      initCandles();
+      renderAll();
+
+      // Welcome live chat messages
+      appendChatMessage('bot', 'PUTIN PABLO FX XAUUSD live scanner connected. Monitoring CHoCH, BOS, VWAP, and 5m EMA 200 liquidity zones.');
+      appendChatMessage('bot', 'Current state: No A-grade setup (3/9 confluences). Ask me anything or trigger a Bullish/Bearish BOS on the chart.');
+
+      // Live tick loop (every 1.5s) & 1s age counter
+      setInterval(() => {
+        if (state.isStreaming) {
+          state.secondsSinceUpdate += 1;
+          document.getElementById('lastUpdatedText').textContent = `Live, updated ${state.secondsSinceUpdate}s ago`;
+        }
+      }, 1000);
+
+      setInterval(processLiveTick, 2200);
+
+      // Expandable "Why" drawer
+      document.getElementById('toggleWhyBtn').addEventListener('click', () => {
+        const drawer = document.getElementById('confluenceDetailsDrawer');
+        const arrow = document.getElementById('whyArrow');
+        const isHidden = drawer.classList.toggle('hidden');
+        arrow.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(90deg)';
+      });
+
+      // Alerts toggle
+      document.getElementById('toggleAlertsBtn').addEventListener('click', (e) => {
+        state.alertsEnabled = !state.alertsEnabled;
+        e.target.textContent = state.alertsEnabled ? 'Alerts active ✓' : 'Turn on alerts';
+        e.target.classList.toggle('border-emerald-400', state.alertsEnabled);
+        e.target.classList.toggle('text-emerald-300', state.alertsEnabled);
+        showToast(state.alertsEnabled ? 'Live XAUUSD structure & zone alerts enabled.' : 'Alerts muted.');
+      });
+
+      // Pause/Resume live feed
+      document.getElementById('toggleSimStreamBtn').addEventListener('click', (e) => {
+        state.isStreaming = !state.isStreaming;
+        e.target.textContent = state.isStreaming ? 'Pause Live Feed' : 'Resume Live Feed';
+        renderHeader();
+      });
+
+      // Dismiss broker warning
+      document.getElementById('dismissBrokerBanner').addEventListener('click', () => {
+        document.getElementById('brokerWarningBanner').classList.add('hidden');
+      });
+
+      // Timeframe buttons
+      document.querySelectorAll('.tf-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tf-btn').forEach(b => {
+            b.className = 'tf-btn rounded-lg border border-[#1c3c4f] bg-[#091720] px-3 py-1.5 font-mono text-xs font-semibold text-slate-300 hover:border-cyan-400';
+          });
+          btn.className = 'tf-btn rounded-lg border border-cyan-400 bg-cyan-400 px-3 py-1.5 font-mono text-xs font-bold text-[#041017] shadow-[0_0_12px_rgba(24,212,232,0.45)]';
+          state.activeTimeframe = btn.dataset.tf;
+          drawChart();
+        });
+      });
+
+      // Simulate Bullish / Bearish BOS buttons
+      document.getElementById('simBullBosBtn').addEventListener('click', () => triggerStructureEvent('BUY'));
+      document.getElementById('simBearBosBtn').addEventListener('click', () => triggerStructureEvent('SELL'));
+
+      // Chart layer checkboxes
+      document.getElementById('toggleBuyZone').addEventListener('change', (e) => {
+        state.chartLayers.buyZone = e.target.checked;
+        drawChart();
+      });
+      document.getElementById('toggleSellZone').addEventListener('change', (e) => {
+        state.chartLayers.sellZone = e.target.checked;
+        drawChart();
+      });
+      document.getElementById('toggleVwap').addEventListener('change', (e) => {
+        state.chartLayers.vwap = e.target.checked;
+        drawChart();
+      });
+      document.getElementById('toggleEma').addEventListener('change', (e) => {
+        state.chartLayers.ema = e.target.checked;
+        drawChart();
+      });
+
+      // Canvas hover crosshair tooltip
+      const canvas = document.getElementById('priceChartCanvas');
+      const tooltip = document.getElementById('chartTooltip');
+      canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const plotW = rect.width - 68;
+        const stepX = plotW / Math.max(state.candles.length + 2, 18);
+        const idx = Math.round(x / stepX) - 1;
+        if (idx >= 0 && idx < state.candles.length) {
+          const c = state.candles[idx];
+          tooltip.classList.remove('hidden');
+          tooltip.textContent = `O: ${fmtPrice(c.open)}  H: ${fmtPrice(c.high)}  L: ${fmtPrice(c.low)}  C: ${fmtPrice(c.close)}`;
+        } else {
+          tooltip.classList.add('hidden');
+        }
+      });
+      canvas.addEventListener('mouseleave', () => tooltip.classList.add('hidden'));
+
+      // Settings modal open/close/save
+      const modal = document.getElementById('settingsModal');
+      const openModal = () => {
+        document.getElementById('inputBidOffset').value = state.bidOffset.toFixed(2);
+        document.getElementById('inputMaxRisk').value = state.maxZoneRisk.toFixed(2);
+        document.getElementById('inputMinRoom').value = state.minRoomDollars.toFixed(2);
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      };
+      const closeModal = () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      };
+
+      document.getElementById('openSettingsBtn').addEventListener('click', openModal);
+      document.getElementById('inlineSettingsTrigger').addEventListener('click', openModal);
+      document.getElementById('closeSettingsBtn').addEventListener('click', closeModal);
+      document.getElementById('cancelSettingsBtn').addEventListener('click', closeModal);
+      document.getElementById('saveSettingsBtn').addEventListener('click', () => {
+        state.bidOffset = parseFloat(document.getElementById('inputBidOffset').value) || 0;
+        state.maxZoneRisk = Math.max(0.5, parseFloat(document.getElementById('inputMaxRisk').value) || 4.0);
+        state.minRoomDollars = Math.max(1.0, parseFloat(document.getElementById('inputMinRoom').value) || 6.0);
+        saveState();
+        renderAll();
+        closeModal();
+        showToast('Settings applied & saved to browser.');
+      });
+
+      // Paper trade & AI reset buttons
+      document.getElementById('runPaperSimBtn').addEventListener('click', runPaperTradeSimulation);
+      document.getElementById('resetAiBtn').addEventListener('click', () => {
+        state.ai = { lessons: 0, wins: 0, losses: 0, filledSetups: 0 };
+        saveState();
+        renderAiPanel();
+        showToast('AI Brain learning counters reset.');
+      });
+
+      // Live Chat Form & Quick Chips
+      document.getElementById('liveChatForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const input = document.getElementById('chatInputField');
+        const text = input.value.trim();
+        if (!text) return;
+        appendChatMessage('user', text);
+        input.value = '';
+        setTimeout(() => {
+          appendChatMessage('bot', generateBotReply(text));
+        }, 280);
+      });
+
+      document.querySelectorAll('.quick-chat-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          const prompt = chip.dataset.prompt;
+          appendChatMessage('user', prompt);
+          setTimeout(() => {
+            appendChatMessage('bot', generateBotReply(prompt));
+          }, 220);
+        });
+      });
+
+      document.getElementById('clearChatBtn').addEventListener('click', () => {
+        document.getElementById('chatMessagesFeed').innerHTML = '';
+        appendChatMessage('bot', 'Chat cleared. Live XAUUSD structure stream active.');
+      });
+
+      // Responsive canvas resize
+      window.addEventListener('resize', drawChart);
+    });
+  </script>
+</body>
+</html>
+```
