@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trading Chart Dashboard</title>
+  <script src="https://unpkg.com"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: #09131c;
+      color: #d1d9e0;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 100vh;
+    }
+
+    /* Card Containers with Corner Brackets */
+    .card {
+      position: relative;
+      background-color: #0b1622;
+      border: 1px solid #162636;
+      border-radius: 4px;
+      padding: 12px;
+    }
+
+    /* Corner accents matching the screenshot */
+    .card::before, .card::after {
+      content: "";
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-color: #2196f3;
+      border-style: solid;
+      pointer-events: none;
+    }
+    .card::before {
+      top: -1px;
+      left: -1px;
+      border-width: 2px 0 0 2px;
+    }
+    .card::after {
+      bottom: -1px;
+      right: -1px;
+      border-width: 0 2px 2px 0;
+    }
+
+    /* Scrollable Button Rows */
+    .button-row {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      scrollbar-width: none;
+    }
+    .button-row::-webkit-scrollbar {
+      display: none;
+    }
+
+    button {
+      background-color: #111f2e;
+      color: #8b9bb4;
+      border: 1px solid #1e3246;
+      border-radius: 4px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+
+    button:hover {
+      border-color: #38587a;
+      color: #ffffff;
+    }
+
+    /* Active Asset Button (Green) */
+    .asset-btn.active {
+      background-color: #10b981;
+      color: #051b11;
+      border-color: #10b981;
+    }
+
+    /* Active Timeframe Button (Blue) */
+    .tf-btn.active {
+      background-color: #2997ff;
+      color: #ffffff;
+      border-color: #2997ff;
+    }
+
+    /* Legend */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      font-size: 12px;
+      color: #94a3b8;
+      margin: 6px 0 10px 0;
+      align-items: center;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .line-indicator {
+      width: 12px;
+      height: 2px;
+      display: inline-block;
+    }
+
+    /* Chart Container */
+    #chart-wrapper {
+      position: relative;
+      width: 100%;
+      height: 360px;
+    }
+
+    #chart-container {
+      width: 100%;
+      height: 100%;
+    }
+
+    #loading-text {
+      position: absolute;
+      top: 10px;
+      left: 0;
+      color: #38bdf8;
+      font-family: monospace;
+      font-size: 13px;
+      z-index: 10;
+    }
+
+    /* Section Headings */
+    .section-title {
+      color: #38bdf8;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .section-subtitle {
+      color: #64748b;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+
+    .status-text {
+      color: #cbd5e1;
+      font-size: 13px;
+    }
+
+    /* News List */
+    .news-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid #162636;
+      font-size: 12px;
+    }
+    .news-item:last-child {
+      border-bottom: none;
+    }
+    .impact-high {
+      background-color: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    /* SMC Structure Badges */
+    .smc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .smc-box {
+      background-color: #111f2e;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #1e3246;
+      font-size: 12px;
+    }
+    .smc-label {
+      color: #64748b;
+      font-size: 11px;
+      display: block;
+      margin-bottom: 2px;
+    }
+    .bullish { color: #10b981; font-weight: 700; }
+    .bearish { color: #ef4444; font-weight: 700; }
+  </style>
+</head>
+<body>
+
+  <!-- MAIN CHART CARD -->
+  <div class="card">
+    <!-- Asset Selector -->
+    <div class="button-row" id="asset-row">
+      <button class="asset-btn active" data-symbol="XAUUSD">XAUUSD</button>
+      <button class="asset-btn" data-symbol="XAGUSD">XAGUSD</button>
+      <button class="asset-btn" data-symbol="EURUSD">EURUSD</button>
+      <button class="asset-btn" data-symbol="BTCUSD">BTCUSD</button>
+      <button class="asset-btn" data-symbol="ETHUSD">ETHUSD</button>
+      <button class="asset-btn" data-symbol="US30">US30</button>
+    </div>
+
+    <!-- Timeframe Selector -->
+    <div class="button-row" id="tf-row">
+      <button class="tf-btn" data-tf="1m">1m</button>
+      <button class="tf-btn" data-tf="5m">5m</button>
+      <button class="tf-btn" data-tf="15m">15m</button>
+      <button class="tf-btn" data-tf="30m">30m</button>
+      <button class="tf-btn active" data-tf="1H">1H</button>
+      <button class="tf-btn" data-tf="4H">4H</button>
+      <button class="tf-btn" data-tf="Daily">Daily</button>
+    </div>
+
+    <!-- Indicator Legend -->
+    <div class="legend">
+      <div class="legend-item">
+        <span class="line-indicator" style="background-color: #10b981;"></span> Buy zone
+      </div>
+      <div class="legend-item">
+        <span class="line-indicator" style="background-color: #ef4444;"></span> Sell zone
+      </div>
+      <div class="legend-item">
+        <span class="line-indicator" style="background-color: #38bdf8;"></span> VWAP
+      </div>
+      <div class="legend-item">
+        <span class="line-indicator" style="background-color: #a855f7;"></span> EMA 200
+      </div>
+    </div>
+
+    <!-- Chart Canvas -->
+    <div id="chart-wrapper">
+      <div id="loading-text">Loading chart...</div>
+      <div id="chart-container"></div>
+    </div>
+  </div>
+
+  <!-- NEWS CARD -->
+  <div class="card">
+    <div class="section-title">TODAY'S HIGH-IMPACT USD NEWS</div>
+    <div class="section-subtitle">ForexFactory calendar, SAST local time</div>
+    <div id="news-content" class="status-text">Loading news...</div>
+  </div>
+
+  <!-- SMC TREND CARD -->
+  <div class="card">
+    <div class="section-title">CURRENT TREND</div>
+    <div id="smc-content" class="status-text">Analyzing SMC market structure...</div>
+  </div>
+
+  <script>
+    // Base prices for simulated market data
+    const BASE_PRICES = {
+      XAUUSD: 2740.00,
+      XAGUSD: 33.80,
+      EURUSD: 1.0840,
+      BTCUSD: 91500.00,
+      ETHUSD: 3120.00,
+      US30: 43800.00
+    };
+
+    let currentSymbol = 'XAUUSD';
+    let currentTf = '1H';
+    let chart, candleSeries, vwapSeries, emaSeries;
+    let buyZoneLine, sellZoneLine;
+
+    // Initialize Lightweight Chart
+    function initChart() {
+      const container = document.getElementById('chart-container');
+      chart = LightweightCharts.createChart(container, {
+        layout: {
+          background: { type: 'solid', color: '#0b1622' },
+          textColor: '#8b9bb4',
+        },
+        grid: {
+          vertLines: { color: '#132336' },
+          horzLines: { color: '#132336' },
+        },
+        crosshair: {
+          mode: LightweightCharts.CrosshairMode.Normal,
+        },
+        rightPriceScale: {
+          borderColor: '#1e3246',
+        },
+        timeScale: {
+          borderColor: '#1e3246',
+          timeVisible: true,
+        },
+      });
+
+      candleSeries = chart.addCandlestickSeries({
+        upColor: '#10b981',
+        downColor: '#ef4444',
+        borderVisible: false,
+        wickUpColor: '#10b981',
+        wickDownColor: '#ef4444',
+      });
+
+      vwapSeries = chart.addLineSeries({
+        color: '#38bdf8',
+        lineWidth: 2,
+        priceLineVisible: false,
+      });
+
+      emaSeries = chart.addLineSeries({
+        color: '#a855f7',
+        lineWidth: 2,
+        priceLineVisible: false,
+      });
+
+      window.addEventListener('resize', () => {
+        chart.applyOptions({ width: container.clientWidth });
+      });
+    }
+
+    // Generate realistic OHLC + EMA 200 + VWAP data
+    function generateMarketData(symbol) {
+      const base = BASE_PRICES[symbol];
+      const volatility = base * 0.003;
+      const candles = [];
+      const vwapData = [];
+      const emaData = [];
+
+      let price = base;
+      let ema = base * 0.992;
+      let cumulativePV = 0;
+      let cumulativeVol = 0;
+      const now = Math.floor(Date.now() / 1000);
+      const step = 3600; // 1 hour intervals
+
+      for (let i = 250; i >= 0; i--) {
+        const time = now - i * step;
+        const open = price;
+        const change = (Math.random() - 0.48) * volatility;
+        const close = open + change;
+        const high = Math.max(open, close) + Math.random() * (volatility * 0.6);
+        const low = Math.min(open, close) - Math.random() * (volatility * 0.6);
+        const volume = Math.floor(Math.random() * 1000) + 200;
+
+        // Calculate EMA 200
+        const k = 2 / (200 + 1);
+        ema = close * k + ema * (1 - k);
+
+        // Calculate VWAP (reset every 24 bars)
+        if (i % 24 === 0) {
+          cumulativePV = 0;
+          cumulativeVol = 0;
+        }
+        const typicalPrice = (high + low + close) / 3;
+        cumulativePV += typicalPrice * volume;
+        cumulativeVol += volume;
+        const vwap = cumulativePV / cumulativeVol;
+
+        candles.push({ time, open, high, low, close });
+        emaData.push({ time, value: ema });
+        vwapData.push({ time, value: vwap });
+
+        price = close;
+      }
+
+      return { candles, vwapData, emaData };
+    }
+
+    // Load Chart, Buy/Sell Zones, and SMC Analysis
+    function loadDashboardData() {
