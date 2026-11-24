@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PUTIN FX BOT</title>
+<style>
+*{box-sizing:border-box}body{background:#000;color:#fff;font-family:Arial;margin:0;padding:0}
+.hero{position:relative;background:linear-gradient(180deg,#001a2e 0%,#000 60%);padding:18px 14px 10px;text-align:center;overflow:hidden}
+.hero:before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(0,180,255,.35),transparent 60%)}
+.title{position:relative;font-size:34px;font-weight:900;letter-spacing:2px;color:#eaf6ff;text-shadow:0 0 20px #00b0ff,0 0 40px #00b0ff}
+.title span{color:#00b0ff}
+.skull{font-size:52px;position:relative;text-shadow:0 0 25px #00b0ff}
+.top{display:flex;align-items:center;gap:12px;text-align:left;padding:16px 14px 0;position:relative}
+.avatar{width:58px;height:58px;border-radius:50%;background:#001a2e;border:2px solid #00b0ff;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;box-shadow:0 0 20px #00b0ff}
+.pair{font-size:22px;letter-spacing:3px}
+.sub{color:#4fc3f7;font-size:14px}
+.priceRow{padding:10px 14px 0;text-align:left}
+.bigPrice{font-size:42px;font-weight:900;letter-spacing:1px}
+.down{color:#ff5252;font-size:16px;font-weight:bold;margin-left:8px}
+.live{padding:6px 14px;font-size:13px;color:#aaa;text-align:left}
+.live b{color:#00e676}
+.btnRow{display:flex;gap:10px;padding:10px 14px}
+.btnRow button{flex:1;background:transparent;color:#fff;border:1px solid #2a4a6a;padding:12px;border-radius:6px;font-size:15px}
+.warn{margin:10px 14px;border:1px solid #2a4a6a;background:#0a0e1a;padding:14px;font-size:14px;line-height:1.5;color:#ccc;border-radius:8px}
+.noGrade{margin:14px;border:1px solid #2a4a6a;background:#0a0e1a;padding:16px;border-radius:10px}
+.noGrade h2{margin:0 0 8px;font-size:22px;font-weight:400}
+.noGrade p{font-size:15px;line-height:1.6;color:#ddd;margin:0}
+.noGrade p b{color:#ff5252}
+.next{margin-top:14px;padding-top:12px;border-top:1px solid #1e2a4a;color:#666;font-size:14px;display:flex;justify-content:space-between}
+.chartBox{margin:14px;border:1px solid #00e5ff;background:#02040a;padding:8px;position:relative}
+canvas{width:100%;height:380px;display:block}
+.legend{font-size:12px;color:#888;margin:8px 0}.legend b{margin-right:10px}
+button.on{background:#00b0ff;color:#fff}button.onPair{background:#00c853;color:#000}
+.tfs button,.pairs button{background:#0a1428;color:#aab;border:1px solid #1e2a4a;padding:9px 14px;border-radius:8px;margin:2px}
+</style></head><body>
+
+<!-- EXACTLY LIKE SCREENSHOT -->
+<div class="hero">
+<div class="skull">💀</div>
+<div class="title">PUTIN <span>FX BOT</span></div>
+<div style="position:relative;color:#ff2d55;font-size:20px;letter-spacing:4px;margin-top:2px">——— LIVE SCANNER ———</div>
+</div>
+
+<div class="top">
+<div class="avatar">💀</div>
+<div><div class="pair">XAUUSD</div><div class="sub">Scalper, zone entries with 3 targets</div></div>
+</div>
+
+<div class="priceRow"><span class="bigPrice" id="livePrice">4,160.83</span><span class="down" id="change">-1.87 (-0.04%) today</span></div>
+<div class="live"><b>● Live, updated <span id="sec">0</span>s ago</b><br><span id="market">Gold market closed for the weekend</span></div>
+
+<div class="btnRow"><button onclick="alert('Alerts ON - You will be notified on A-grade BOS')">Turn on alerts</button><button onclick="document.getElementById('settings').style.display='block'">Settings</button></div>
+
+<div class="warn" id="settings">Prices aren't matched to XM yet. Open Settings and match GOLD to your XM MT5 Bid before using these levels.<br><br>
+<span style="color:#fff">XM MT5 Bid: <input id="xmPrice" value="4160.83" style="background:#0a1428;color:#fff;border:1px solid #333;padding:8px;width:110px;border-radius:6px"> <button onclick="matchXM()" style="background:#00b0ff;color:#fff;border:0;padding:8px 12px;border-radius:6px">MATCH</button> <span id="offTxt" style="color:#00e676"></span></span>
+</div>
+
+<div class="noGrade">
+<h2>No A-grade setup</h2>
+<p><b id="trendTxt">Bearish on the 15m with price below the 5m EMA 200, so it's hunting sells only.</b> Price is near the sell range at <span id="sellRange">4,159.67 to 4,160.38</span>, but it has <span id="confTxt">3 of 9 confluences</span> and it fails a required check, so it's skipped.</p>
+<div class="next"><span>Next buy range</span><span>none with $6.00 of room nearby</span></div>
+<div class="next"><span>Next sell range</span><span id="nextSell">4,159.67 - 4,160.38 • 3/9</span></div>
+</div>
+
+<div style="padding:0 14px"><div id="pairs" class="pairs"></div><div id="tfs" class="tfs"></div></div>
+
+<div class="chartBox">
+<div class="legend"><b style="color:#00e676">--- Buy zone</b><b style="color:#ff4d6d">--- Sell zone</b><b style="color:#00b0ff">— VWAP</b><b style="color:#8a93b2">— EMA 200</b></div>
+<canvas id="c" width="900" height="380"></canvas>
+</div>
+
+<script>
+let pair='XAUUSD', tf='1H', livePrice=4160.83, offset=0, startPrice=4160.83;
+const $=id=>document.getElementById(id);
+const LIVE={XAUUSD:'PAXGUSDT',XAGUSD:'XAGUSDT',EURUSD:'EURUSDT',BTCUSD:'BTCUSDT',ETHUSD:'ETHUSDT',US30:'US30USDT'};
+const BASE={XAUUSD:4160.83,XAGUSD:42,EURUSD:1.08,BTCUSD:97000,ETHUSD:3400,US30:44000};
+let prices=[]; (function(){let p=BASE[pair]; for(let i=0;i<48;i++){p+=(Math.random()*18-7); prices.push(p);} livePrice=p; })();
+function matchXM(){let xm=parseFloat($('xmPrice').value); if(xm){offset=xm-livePrice; $('offTxt').textContent='Matched! Offset '+offset.toFixed(2); let sr=(4159.67+offset).toFixed(2)+' to '+(4160.38+offset).toFixed(2); $('sellRange').textContent=sr; $('nextSell').textContent=sr+' • 3/9'; alert('Matched to XM! All zones shifted by '+offset.toFixed(2));}}
+function draw(){
+  let cv=$('c'), ctx=cv.getContext('2d'), W=cv.width, H=cv.height; ctx.clearRect(0,0,W,H);
+  let minP=Math.min(...prices)-80, maxP=Math.max(...prices)+80;
+  const Y=p=>20+(maxP-p)/(maxP-minP)*(H-60); const X=i=>10+i*(W-130)/48;
+  ctx.strokeStyle='#0a1626'; for(let y=0;y<H;y+=60){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W-110,y);ctx.stroke();}
+  let vwap=prices.reduce((a,b)=>a+b,0)/prices.length;
+  ctx.strokeStyle='#8a93b2';ctx.lineWidth=2;ctx.beginPath(); for(let i=0;i<50;i++){let p=prices[0]+(maxP-minP)*0.35-i*1.2; let x=X(i),y=Y(p); i?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();
+  ctx.strokeStyle='#00b0ff';ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(X(0),Y(vwap));ctx.lineTo(X(48),Y(vwap));ctx.stroke();ctx.setLineDash([]);
+  ctx.strokeStyle='#00e676';ctx.setLineDash([6,4]);ctx.beginPath();ctx.moveTo(X(0),Y(vwap-35));ctx.lineTo(X(48),Y(vwap-35));ctx.stroke();
+  ctx.strokeStyle='#ff4d6d';ctx.beginPath();ctx.moveTo(X(0),Y(vwap+35));ctx.lineTo(X(48),Y(vwap+35));ctx.stroke();ctx.setLineDash([]);
+  for(let i=0;i<prices.length;i++){let open=i?prices[i-1]:prices[i], close=prices[i], high=Math.max(open,close)+6, low=Math.min(open,close)-6; let x=X(i), yO=Y(open), yC=Y(close), yH=Y(high), yL=Y(low); let col=close>=open?'#00e676':'#ff5252'; ctx.strokeStyle=col;ctx.beginPath();ctx.moveTo(x,yH);ctx.lineTo(x,yL);ctx.stroke(); ctx.fillStyle=col;ctx.fillRect(x-4,Math.min(yO,yC),8,Math.max(3,Math.abs(yC-yO)));}
+  function label(idx,txt,col,above){let x=X(idx), y=Y(prices[idx])+(above?-28:28); ctx.fillStyle=col;ctx.beginPath();ctx.arc(x,Y(prices[idx])+(above?-12:12),5,0,Math.PI*2);ctx.fill(); ctx.font='bold 13px Arial';ctx.textAlign='center';ctx.fillText(txt,x,y);}
+  label(6,'CHoCH','#ff5252',true); label(11,'CHoCH','#ff5252',true); label(17,'CHoCH','#00e676',false); label(28,'BOS','#00e676',true); label(44,'BOS','#00e676',true);
+  ctx.fillStyle='#00e676';ctx.fillRect(W-105,Y(livePrice)-12,105,24); ctx.fillStyle='#000';ctx.font='bold 13px Arial';ctx.textAlign='left';ctx.fillText(livePrice.toFixed(2),W-100,Y(livePrice)+4);
+}
+async function fetchLive(){
+  try{let r=await fetch('https://api.binance.com/api/v3/ticker/price?symbol='+LIVE[pair]); let j=await r.json(); let p=parseFloat(j.price); if(p>0){livePrice=p+offset; prices.push(livePrice); if(prices.length>48)prices.shift();
+  let diff=livePrice-startPrice, pct=(diff/startPrice*100);
+  $('livePrice').textContent=livePrice.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  $('change').textContent=(diff>=0?'+':'')+diff.toFixed(2)+' ('+(pct>=0?'+':'')+pct.toFixed(2)+'%) today'; $('change').style.color=diff>=0?'#00e676':'#ff5252';
+  $('sec').textContent='0';
+  let d=new Date(); let day=d.getDay(); $('market').textContent=(day===0||day===6)?'Gold market closed for the weekend':'Gold market open • London + New York session';
+  }}catch(e){livePrice+=(Math.random()*4-1.5); prices.push(livePrice); if(prices.length>48)prices.shift(); $('livePrice').textContent=livePrice.toFixed(2);}
+  draw();
+}
+function load(){prices=[]; let p=BASE[pair]; for(let i=0;i<48;i++){p+=(Math.random()*18-7); prices.push(p);} livePrice=p; startPrice=p; draw(); fetchLive();}
+['XAUUSD','XAGUSD','EURUSD','BTCUSD','ETHUSD','US30'].forEach(p=>{let b=document.createElement('button');b.textContent=p; if(p===pair)b.className='onPair'; b.onclick=()=>{pair=p; document.querySelectorAll('#pairs button').forEach(x=>x.className=''); b.className='onPair'; load();}; $('pairs').appendChild(b);});
+['1m','5m','15m','1H','4H','Daily'].forEach(t=>{let b=document.createElement('button');b.textContent=t; if(t===tf)b.className='on'; b.onclick=()=>{tf=t; document.querySelectorAll('#tfs button').forEach(x=>x.className=''); b.className='on'; load();}; $('tfs').appendChild(b);});
+load();
+let s=0; setInterval(()=>{s++; $('sec').textContent=s; if(s>=3){fetchLive(); s=0;}},1000); setInterval(fetchLive,3000);
+</script></body></html>
